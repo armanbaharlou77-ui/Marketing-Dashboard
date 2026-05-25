@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fafafa;
+  --foreground: #171717;
+}
+
+@font-face {
+  font-family: "IRANSansXFaNum";
+  src: url("../../public/fonts/Farsinumerals/Webfonts/IRANSansXFaNum-Medium.woff2");
+}
+
+html,
+body {
+  /* max-width: 100vw;
+  overflow-x: hidden; */
+  font-family: IRANSansXFaNum, IRANSansX !important;
+  /* user-select: none; */
+}
+
+* {
+  direction: rtl;
+  font-family: IRANSansXFaNum, IRANSansX !important;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
