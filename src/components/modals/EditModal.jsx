@@ -207,11 +207,13 @@ export default function EditModal({ isOpen, onClose, product, onSave }) {
                   onChange={handleImageChange}
                 />
                 {formData.imagePreview ? (
-                  <div className="relative max-h-48 w-full rounded-lg overflow-hidden">
+                  // ۱. ارتفاع والد را ثابت کردیم (h-48) و یک پس‌زمینه محو دادیم تا فضای خالی عکس زشت نشود
+                  <div className="relative h-48 w-full rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center">
                     <img
                       src={formData.imagePreview}
                       alt={formData.title || "تصویر محصول"}
-                      className="object-cover transition-transform duration-500 hover:scale-105 mx-auto h-full"
+                      // ۲. عرض و ارتفاع عکس باید ۱۰۰٪ والد باشد تا object-contain عمل کند
+                      className="w-full h-full object-contain transition-transform duration-500 p-2"
                     />
                     <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent px-4 py-3 text-white">
                       <span className="block truncate text-sm font-medium text-center">
