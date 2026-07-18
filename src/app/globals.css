@@ -54,7 +54,7 @@ body {
 
 @font-face {
   font-family: "IRANSansXFaNum";
-  src: url("../../public/fonts/Farsinumerals/Webfonts/IRANSansXFaNum-Medium.woff2");
+  src: url("/dashboard/fonts/Farsinumerals/Webfonts/IRANSansXFaNum-Medium.woff2");
 }
 
 * {

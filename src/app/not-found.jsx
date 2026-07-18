@@ -34,16 +34,10 @@ export default function NotFound() {
 
                 {/* دکمه‌ها */}
                 <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-                    <button
-                        onClick={() => router.back()}
-                        className="group flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900 sm:w-auto"
-                    >
-                        <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
-                        <span>بازگشت به قبل</span>
-                    </button>
+
 
                     <Link
-                        href="/dashboard"
+                        href="/"
                         className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/30 transition-all hover:bg-indigo-700 sm:w-auto"
                     >
                         <Home size={18} />

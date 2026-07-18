@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BsTelegram, BsWhatsapp, BsInstagram } from "react-icons/bs";
 import { Trash2Icon } from "lucide-react";
 
@@ -16,16 +16,80 @@ const emptyLinkItem = (id) => ({
   url: "",
 });
 
-export default function ContactInfo() {
-  const [phoneItems, setPhoneItems] = useState([emptyPhoneItem(1)]);
-  const [linkItems, setLinkItems] = useState([emptyLinkItem(1)]);
-  const [socialMedia, setSocialMedia] = useState({
-    telegram: "",
-    whatsapp: "",
-    instagram: "",
-    eitaa: "",
-    bale: "",
-  });
+const createDefaultSocials = () => ({
+  telegram: "",
+  whatsapp: "",
+  instagram: "",
+  eitaa: "",
+  bale: "",
+});
+
+const normalizePhoneItems = (items) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return [emptyPhoneItem(1)];
+  }
+
+  return items.map((item, index) => ({
+    id: item?.id ?? index + 1,
+    title: item?.title ?? item?.name ?? item?.label ?? "",
+    number: item?.number ?? item?.phone ?? item?.value ?? "",
+  }));
+};
+
+const normalizeLinkItems = (items) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return [emptyLinkItem(1)];
+  }
+
+  return items.map((item, index) => ({
+    id: item?.id ?? index + 1,
+    title: item?.title ?? item?.name ?? item?.label ?? "",
+    url: item?.url ?? item?.link ?? item?.value ?? "",
+  }));
+};
+
+const normalizeSocials = (items) => {
+  const socials = createDefaultSocials();
+
+  if (Array.isArray(items)) {
+    items.forEach((item) => {
+      const key = item?.id || item?.name || item?.platform;
+      if (key && Object.prototype.hasOwnProperty.call(socials, key)) {
+        socials[key] = item?.value ?? item?.url ?? item?.link ?? item?.handle ?? "";
+      }
+    });
+    return socials;
+  }
+
+  if (items && typeof items === "object") {
+    return {
+      ...socials,
+      ...Object.fromEntries(
+        Object.entries(items).filter(([key]) =>
+          Object.prototype.hasOwnProperty.call(socials, key)
+        )
+      ),
+    };
+  }
+
+  return socials;
+};
+
+export default function ContactInfo({
+  initialPhoneItems,
+  initialLinkItems,
+  initialSocialMedia,
+  onContactChange,
+}) {
+  const [phoneItems, setPhoneItems] = useState(() =>
+    normalizePhoneItems(initialPhoneItems)
+  );
+  const [linkItems, setLinkItems] = useState(() =>
+    normalizeLinkItems(initialLinkItems)
+  );
+  const [socialMedia, setSocialMedia] = useState(() =>
+    normalizeSocials(initialSocialMedia)
+  );
 
   const handlePhoneChange = (id, field, value) => {
     setPhoneItems((prev) =>
@@ -109,6 +173,29 @@ export default function ContactInfo() {
       ),
     },
   ];
+
+  useEffect(() => {
+    if (typeof onContactChange !== "function") {
+      return;
+    }
+
+    onContactChange({
+      phones: phoneItems.map((item) => ({
+        id: item.id,
+        title: item.title,
+        number: item.number,
+      })),
+      links: linkItems.map((item) => ({
+        id: item.id,
+        title: item.title,
+        url: item.url,
+      })),
+      socials: Object.entries(socialMedia).map(([key, value]) => ({
+        id: key,
+        value,
+      })),
+    });
+  }, [phoneItems, linkItems, socialMedia, onContactChange]);
 
   return (
     <div className="mt-8 h-fit w-full rounded-xl border border-gray-300 bg-slate-100 md:p-6 p-4 shadow-lg">

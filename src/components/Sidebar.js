@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { GrShop } from "react-icons/gr";
 import { useRouter } from "next/navigation";
 import BusinessSelector from "@/components/ui/BusinessSelector";
+import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
+import Cookies from "js-cookie";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -14,6 +16,7 @@ import {
   Settings,
   LogOut,
   Menu,
+  Bell,
   X,
 } from "lucide-react";
 
@@ -23,6 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getBusiness } from "@/services/authService";
 
 const menuItems = [
   { title: "داشبورد", icon: LayoutDashboard, href: "/dashboard" },
@@ -31,10 +35,26 @@ const menuItems = [
   { title: "تنظیمات", icon: Settings, href: "/dashboard/settings" },
 ];
 
+// const pickValue = (source, keys) => {
+//   for (const key of keys) {
+//     const value = source?.[key];
+//     if (value !== undefined && value !== null && value !== "") {
+//       return value;
+//     }
+//   }
+
+//   return "";
+// };
+
 export default function Sidebar() {
   const pathname = usePathname();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const { activeBusiness, businesses, setActiveBusiness } = useActiveBusiness();
+
+  const [userInfo, setUserInfo] = useState(null);
+  const [businessInfo, setBusinessInfo] = useState(null);
 
   const router = useRouter();
 
@@ -43,9 +63,7 @@ export default function Sidebar() {
       document.body.style.overflow = "";
       return;
     }
-
     document.body.style.overflow = "hidden";
-
     return () => {
       document.body.style.overflow = "";
     };
@@ -55,24 +73,97 @@ export default function Sidebar() {
     setIsMobileMenuOpen(false);
   };
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("dashboard-user");
+
+    if (storedUser) {
+      setUserInfo(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const getBusinessInfo = async () => {
+    try {
+      const data = await getBusiness(userInfo?.owner_id);
+      if (data.msg === 0) {
+        const firstBusiness = data.businesses[0];
+        localStorage.setItem(
+          "dashboard-activeBusiness",
+          JSON.stringify(firstBusiness),
+        );
+        setActiveBusiness(firstBusiness);
+        setBusinessInfo(data);
+      }
+    } catch (error) {
+      console.error("Error fetching business info:", error);
+    }
+  };
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("dashboard-user");
+    if (!storedUser) {
+      router.push("/login");
+    }
+  }, [router]);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("dashboard-user");
+    if (storedUser) {
+      setUserInfo(JSON.parse(storedUser));
+    }
+
+    getBusinessInfo();
+  }, []);
+
+  const logOut = () => {
+    Cookies.remove("owner-token", { path: "/" });
+    localStorage.clear();
+    router.push("/login");
+  };
+  // console.log(userInfo);
+  // console.log(businessInfo?.owner_first_name);
+  // console.log(businessInfo?.businesses[0]);
+
   return (
     <>
-      <div className="sticky top-0 z-30 flex gap-4 items-center  border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur md:hidden">
-        <button
-          type="button"
-          aria-label={isMobileMenuOpen ? "بستن منو" : "باز کردن منو"}
-          aria-expanded={isMobileMenuOpen}
-          aria-controls="mobile-sidebar"
-          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-          className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 shadow-sm transition hover:bg-slate-100 active:scale-[0.98]"
-        >
-          {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
-        <div className="min-w-0">
-          <h1 className="truncate text-base font-black text-slate-900">
-            پنل مدیریت
-          </h1>
+      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-slate-200/70 bg-white/80 px-4 py-3 backdrop-blur-md shadow-[0_2px_10px_rgba(0,0,0,0.02)] md:hidden">
+        <div className="flex items-center gap-3.5">
+          <button
+            type="button"
+            aria-label={isMobileMenuOpen ? "بستن منو" : "باز کردن منو"}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-sidebar"
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            className="group relative flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 hover:ring-indigo-200 active:scale-90"
+          >
+            {isMobileMenuOpen ? (
+              <X
+                size={22}
+                className="transition-transform duration-300 group-active:rotate-90"
+              />
+            ) : (
+              <Menu
+                size={22}
+                className="transition-transform duration-300 group-active:scale-90"
+              />
+            )}
+          </button>
+          <div className="flex flex-col justify-center">
+            <h1 className="truncate text-lg font-black tracking-tight text-slate-800">
+              پنل مدیریت
+            </h1>
+            <span className="text-[11px] font-bold text-indigo-500/80">
+              {businessInfo?.owner_first_name} {businessInfo?.owner_last_name}
+            </span>
+          </div>
         </div>
+
+        {/* <button
+          type="button"
+          className="relative flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+        >
+          <Bell size={19} />
+          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+        </button> */}
       </div>
 
       {isMobileMenuOpen && (
@@ -90,7 +181,7 @@ export default function Sidebar() {
           isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex  justify-between border-b border-slate-200 px-4 py-4 md:hidden">
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 md:hidden">
           <div className="mb-4 rounded-[1.75rem] bg-slate-400 p-4 text-white shadow-lg shadow-indigo-500/20 md:mb-8 md:px-4 md:py-6">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
@@ -98,7 +189,8 @@ export default function Sidebar() {
               </div>
 
               <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-700 ring-1 ring-white/60 md:text-sm">
-                آرمان بهارلو
+                {businessInfo?.businesses[0].owner_first_name}{" "}
+                {businessInfo?.businesses[0].owner_last_name}
               </span>
             </div>
           </div>
@@ -121,7 +213,8 @@ export default function Sidebar() {
                 </div>
 
                 <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-700 ring-1 ring-white/60 md:text-sm">
-                  آرمان بهارلو
+                  {businessInfo?.businesses[0].owner_first_name}{" "}
+                  {businessInfo?.businesses[0].owner_last_name}
                 </span>
               </div>
             </div>
@@ -207,7 +300,7 @@ export default function Sidebar() {
               <button
                 type="button"
                 className="rounded-xl bg-red-500 px-4 py-2 text-white transition hover:bg-red-600"
-                onClick={() => router.push("/login")}
+                onClick={logOut}
               >
                 خروج
               </button>
