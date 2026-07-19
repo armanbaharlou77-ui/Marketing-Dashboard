@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // basePath: "/dashboard",
+  basePath: "/dashboard",
   trailingSlash: true,
   output: "export",
   allowedDevOrigins: ["192.168.100.54"],

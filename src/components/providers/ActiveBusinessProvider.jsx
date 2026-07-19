@@ -272,6 +272,7 @@ export function ActiveBusinessProvider({ children }) {
     }),
     [activeBusiness, businesses, userInfo]
   );
+  console.log(userInfo);
 
   return (
     <ActiveBusinessContext.Provider value={value}>
@@ -279,6 +280,8 @@ export function ActiveBusinessProvider({ children }) {
     </ActiveBusinessContext.Provider>
   );
 }
+
+
 
 export function useActiveBusiness() {
   const context = useContext(ActiveBusinessContext);

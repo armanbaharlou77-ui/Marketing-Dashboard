@@ -111,6 +111,42 @@ export const setBusiness = async (payload = {}) => {
 
   return response.data;
 };
+export const setBaseInfo = async (payload = {}) => {
+  const {
+    businessId = 0,
+    businessTitle,
+    ownerId,
+    shortDescription,
+    address,
+    city,
+    about,
+    lat,
+    lng,
+  } = payload;
+
+  const userInfo = localStorage.getItem("dashboard-user");
+  const storedOwnerId = userInfo ? JSON.parse(userInfo)?.owner_id : null;
+  const token = Cookies.get("owner-token");
+
+  const response = await httpClient({
+    data: {
+      token,
+      class_name: "business_business",
+      function_name: "set_base_info",
+      id: businessId,
+      owner_id: ownerId ?? storedOwnerId,
+      name: businessTitle,
+      description: shortDescription,
+      address,
+      city,
+      lat,
+      lng,
+      about,
+    },
+  });
+
+  return response.data;
+};
 
 export const addFile = async (file, token) => {
   const formData = new FormData();

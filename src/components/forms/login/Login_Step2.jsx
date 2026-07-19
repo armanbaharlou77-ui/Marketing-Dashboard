@@ -39,7 +39,7 @@ export default function Login_Step2() {
     } else {
 
       toast.error("شماره موبایل یافت نشد. لطفاً مجدداً وارد شوید.");
-      router.push("/dashboard");
+      router.push("/login");
     }
   }, [router]);
 
@@ -61,7 +61,7 @@ export default function Login_Step2() {
 
       if (+data.msg === 0) {
         // Store token and user info
-        Cookies.set("owner-token", data?.token, { expires: 7 });
+        Cookies.set("owner-token", data?.token);
         localStorage.setItem("dashboard-user", JSON.stringify(data?.value));
 
         if (!data?.value?.first_name && !data?.value?.last_name) {
@@ -74,13 +74,12 @@ export default function Login_Step2() {
           const firstBusiness = data.value.businesses[0];
           localStorage.setItem("dashboard-activeBusiness", JSON.stringify(firstBusiness));
           setActiveBusiness(firstBusiness);
-          router.push("/dashboard");
+          router.push("/");
           toast.success(data.msg_txt || "با موفقیت وارد شدید");
         } else {
           // If user has no businesses, go to registration page
           setIsLogoutModalOpen(true);
         }
-
 
 
       } else if (+data.msg === 1) {
@@ -109,7 +108,7 @@ export default function Login_Step2() {
     if (data.msg === 0) {
       setIsNameFormOpen(false);
       setIsLogoutModalOpen(false);
-      router.push("/login/addNewMarketing")
+      router.push("/addNewMarketing")
       toast.success(data.msg_txt || "اطلاعات با موفقیت ثبت شد")
     } else if (data.msg === -1) {
       toast.error(data.msg_txt || "خطا در ثبت اطلاعات")
@@ -277,7 +276,7 @@ export default function Login_Step2() {
                   type="button"
                   className="rounded-xl bg-green-500 px-4 py-2 text-white transition hover:bg-green-600"
                   onClick={() => {
-                    router.push("/login/addNewMarketing")
+                    router.push("/addNewMarketing")
                   }}
                 >
                   ثبت نام

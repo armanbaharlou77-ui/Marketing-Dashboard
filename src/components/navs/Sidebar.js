@@ -29,10 +29,10 @@ import {
 import { getBusiness } from "@/services/authService";
 
 const menuItems = [
-  { title: "داشبورد", icon: LayoutDashboard, href: "/dashboard" },
-  { title: "ویرایش کسب و کار", icon: Package, href: "/dashboard/marketing" },
-  { title: "محصولات", icon: GrShop, href: "/dashboard/products" },
-  { title: "تنظیمات", icon: Settings, href: "/dashboard/settings" },
+  { title: "داشبورد", icon: LayoutDashboard, href: "/" },
+  { title: "ویرایش کسب و کار", icon: Package, href: "/marketing" },
+  { title: "محصولات", icon: GrShop, href: "/products" },
+  { title: "تنظیمات", icon: Settings, href: "/settings" },
 ];
 
 // const pickValue = (source, keys) => {
@@ -50,7 +50,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  console.log(pathname);
   const { activeBusiness, businesses, setActiveBusiness } = useActiveBusiness();
 
   const [userInfo, setUserInfo] = useState(null);
@@ -225,8 +225,7 @@ export default function Sidebar() {
                 const Icon = item.icon;
                 const isActive =
                   pathname === item.href ||
-                  (item.href !== "/dashboard" &&
-                    pathname.startsWith(item.href));
+                  (item.href !== "/" && pathname.startsWith(item.href));
 
                 return (
                   <Link

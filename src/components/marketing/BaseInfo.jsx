@@ -6,7 +6,7 @@ import Select from "react-select";
 import { getCities } from "@/services/authService";
 
 const LocationPicker = dynamic(
-  () => import("../LocationPicker"),
+  () => import("../ui/LocationPicker"),
   { ssr: false }
 )
 
@@ -255,7 +255,7 @@ export default function BaseInfo({
             styles={customSelectStyles}
             dir="rtl"
             maxMenuHeight={220}
-            className={`text-sm  ${errors.city ? "rounded-xl ring-1 ring-red-400" : ""} z-500`}
+            className={`text-sm  ${errors.city ? "rounded-xl ring-1 ring-red-400" : ""} z-10`}
           />
           {errors.city && (
             <p className="mt-1 text-sm text-red-600">{errors.city}</p>

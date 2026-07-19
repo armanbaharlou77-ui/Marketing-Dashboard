@@ -7,7 +7,7 @@ import { useState } from "react";
 import AddProductModal from "@/components/modals/AddProductModal";
 import { useEffect } from "react";
 import { getFeed } from "@/services/authService";
-import PostCard from "@/components/PostCard";
+import PostCard from "@/components/cards/PostCard";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
 
 export default function Page() {

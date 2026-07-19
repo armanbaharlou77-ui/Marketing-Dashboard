@@ -32,7 +32,7 @@ function LocationMarker({ position, setPosition }) {
 export default function LocationPicker({ position, setPosition }) {
     const defaultCenter = position?.lat && position?.lng
         ? [position.lat, position.lng]
-        : [35.6892, 51.3890];
+        : [32.6546, 51.6680];
 
     return (
         <div className="overflow-hidden rounded-2xl border border-gray-200">

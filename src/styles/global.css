@@ -7,7 +7,8 @@
 
 @font-face {
   font-family: "IRANSansXFaNum";
-  src: url("../../public/fonts/Farsinumerals/Webfonts/IRANSansXFaNum-Medium.woff2");
+  src: url("manoshahrplus.ir/folder/font/IRANSansXFaNum-Medium.woff2");
+  /* src: url("../../public/fonts/Farsinumerals/Webfonts/IRANSansXFaNum-Medium.woff2"); */
 }
 
 html,

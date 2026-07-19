@@ -437,15 +437,20 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
         onContactChange={setContactData}
       />
 
-      <div className="sticky bottom-0 left-0 flex items-center justify-end">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSaving}
-          className="mb-20 mt-6  rounded-lg bg-indigo-600 px-12 py-3 font-semibold text-gray-100 shadow-xl transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {isSaving ? "در حال ذخیره..." : "ثبت نهایی"}
-        </button>
+      {/* فضای خالی تا آخرین فیلدها زیر دکمه ثابت نمانند */}
+      <div className="h-20" aria-hidden />
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center px-4 md:right-80 sm:bottom-6 sm:justify-end sm:px-6 lg:px-8">
+        <div className="pointer-events-auto w-full max-w-[900px] sm:flex sm:justify-end">
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSaving}
+            className="w-full rounded-2xl bg-indigo-600 px-10 py-3.5 text-sm font-bold tracking-wide text-white shadow-[0_8px_30px_rgba(79,70,229,0.28)] transition duration-200 hover:bg-indigo-700 hover:shadow-[0_10px_36px_rgba(79,70,229,0.38)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none sm:w-auto sm:min-w-[168px]"
+          >
+            {isSaving ? "در حال ذخیره..." : "ثبت نهایی"}
+          </button>
+        </div>
       </div>
     </>
   );

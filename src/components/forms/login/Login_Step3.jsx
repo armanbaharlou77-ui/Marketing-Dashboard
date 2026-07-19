@@ -7,7 +7,7 @@ import PhotoGallery from "@/components/marketing/PhotoGallery";
 import Specifications from "@/components/marketing/Specifications";
 import Category from "@/components/marketing/Category";
 import { useRouter } from 'next/navigation';
-import { setBusiness, setInfo, getBusiness, getOwner, start } from '@/services/authService';
+import { setBaseInfo } from '@/services/authService';
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 
@@ -18,6 +18,7 @@ export default function Login_Step3() {
     const [about, setAbout] = useState('')
     const [address, setAddress] = useState('')
     const [city, setCity] = useState('')
+    const [position, setPosition] = useState(null);
     const [galleryItems, setGalleryItems] = useState([
         { id: 1, image: '', imagePreview: '', uploadedUrl: '', title: '', alt: '' },
     ])
@@ -92,10 +93,10 @@ export default function Login_Step3() {
         if (!about.trim()) nextErrors.about = 'درباره کسب و کار الزامی است.'
         if (!address.trim()) nextErrors.address = 'آدرس الزامی است.'
 
-        const hasImage = galleryItems.some(
-            (item) => item.image || item.imagePreview
-        )
-        if (!hasImage) nextErrors.gallery = 'حداقل یک عکس باید انتخاب شود.'
+        // const hasImage = galleryItems.some(
+        //     (item) => item.image || item.imagePreview
+        // )
+        // if (!hasImage) nextErrors.gallery = 'حداقل یک عکس باید انتخاب شود.'
 
         setErrors(nextErrors)
         if (Object.keys(nextErrors).length > 0) {
@@ -104,30 +105,30 @@ export default function Login_Step3() {
             return
         }
 
-        const uploadedImgs = galleryItems
-            .filter((item) => item.uploadedUrl)
-            .map((item) => ({
-                url: item.uploadedUrl,
-                title: item.title || "",
-                alt: item.alt || "",
-            }))
+        // const uploadedImgs = galleryItems
+        //     .filter((item) => item.uploadedUrl)
+        //     .map((item) => ({
+        //         url: item.uploadedUrl,
+        //         title: item.title || "",
+        //         alt: item.alt || "",
+        //     }))
 
-        if (uploadedImgs.length === 0) {
-            nextErrors.gallery = 'حداقل یک عکس با لینک آپلود شده باید وجود داشته باشد.'
-            setErrors(nextErrors)
-            setTimeout(() => scrollToErrorField('gallery'), 100)
-            return
-        }
+        // if (uploadedImgs.length === 0) {
+        //     nextErrors.gallery = 'حداقل یک عکس با لینک آپلود شده باید وجود داشته باشد.'
+        //     setErrors(nextErrors)
+        //     setTimeout(() => scrollToErrorField('gallery'), 100)
+        //     return
+        // }
 
-        const pendingUpload = galleryItems.some(
-            (item) => item.image && !item.uploadedUrl && item.uploading
-        )
-        if (pendingUpload) {
-            nextErrors.gallery = 'لطفا صبر کنید تا آپلود عکس‌ها کامل شود.'
-            setErrors(nextErrors)
-            setTimeout(() => scrollToErrorField('gallery'), 100)
-            return
-        }
+        // const pendingUpload = galleryItems.some(
+        //     (item) => item.image && !item.uploadedUrl && item.uploading
+        // )
+        // if (pendingUpload) {
+        //     nextErrors.gallery = 'لطفا صبر کنید تا آپلود عکس‌ها کامل شود.'
+        //     setErrors(nextErrors)
+        //     setTimeout(() => scrollToErrorField('gallery'), 100)
+        //     return
+        // }
 
         const phones = contactData.phones || []
         const links = contactData.links || []
@@ -149,21 +150,21 @@ export default function Login_Step3() {
                 address,
                 city,
                 about,
-                imgs: uploadedImgs,
-                links,
-                socials,
-                phones,
-                specs,
-                lat: undefined,
-                lng: undefined,
-                banner: bannerUrl,
-                category_ids: selectedCategories || []
+                lat: position ? position.lat : null,
+                lng: position ? position.lng : null,
+                // imgs: uploadedImgs,
+                // links,
+                // socials,
+                // phones,
+                // specs,
+                // banner: bannerUrl,
+                // category_ids: selectedCategories || []
             }
 
-            const data = await setBusiness(payload)
+            const data = await setBaseInfo(payload)
             if (data.msg === 0) {
                 toast.success(data.msg_txt || "اطلاعات با موفقیت ثبت شد")
-                router.push('/dashboard')
+                router.push('/')
             } else {
                 toast.error(data.msg_txt || "خطا در ثبت اطلاعات")
             }
@@ -196,9 +197,11 @@ export default function Login_Step3() {
                     address={address}
                     city={city}
                     errors={errors}
+                    position={position}
+                    setPosition={setPosition}
                     onInfoChange={handleInfoChange}
                 />
-                <Category
+                {/* <Category
                     setCategories={setSelectedCategories}
                     initialCategoryIds={[]}
                 />
@@ -210,7 +213,7 @@ export default function Login_Step3() {
                     error={errors.gallery}
                 />
                 <Specifications onSpecificationsChange={handleSpecificationsChange} />
-                <ContactInfo onContactChange={handleContactChange} />
+                <ContactInfo onContactChange={handleContactChange} /> */}
             </div>
 
             <div className="mt-10 mb-20 sm:mb-10 flex items-center justify-center sm:justify-end">
