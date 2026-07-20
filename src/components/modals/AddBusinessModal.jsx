@@ -237,7 +237,7 @@ export default function AddBusinessModal({
   };
 
   const getStoredUser = () => {
-    const storedUser = localStorage.getItem("admin-user");
+    const storedUser = localStorage.getItem("dashboard-user");
     if (!storedUser) return null;
     try {
       return JSON.parse(storedUser);
@@ -290,7 +290,7 @@ export default function AddBusinessModal({
       businesses,
     };
 
-    localStorage.setItem("admin-user", JSON.stringify(nextUser));
+    localStorage.setItem("dashboard-user", JSON.stringify(nextUser));
 
     if (typeof setApiBusinesses === "function") {
       setApiBusinesses(businesses);

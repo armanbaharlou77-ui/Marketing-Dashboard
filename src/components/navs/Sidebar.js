@@ -10,13 +10,10 @@ import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider
 import Cookies from "js-cookie";
 import {
   LayoutDashboard,
-  ShoppingCart,
   Package,
-  Users,
   Settings,
   LogOut,
   Menu,
-  Bell,
   X,
 } from "lucide-react";
 
@@ -26,7 +23,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getBusiness } from "@/services/authService";
 
 const menuItems = [
   { title: "داشبورد", icon: LayoutDashboard, href: "/" },
@@ -35,28 +31,16 @@ const menuItems = [
   { title: "تنظیمات", icon: Settings, href: "/settings" },
 ];
 
-// const pickValue = (source, keys) => {
-//   for (const key of keys) {
-//     const value = source?.[key];
-//     if (value !== undefined && value !== null && value !== "") {
-//       return value;
-//     }
-//   }
-
-//   return "";
-// };
-
 export default function Sidebar() {
   const pathname = usePathname();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  console.log(pathname);
-  const { activeBusiness, businesses, setActiveBusiness } = useActiveBusiness();
-
-  const [userInfo, setUserInfo] = useState(null);
-  const [businessInfo, setBusinessInfo] = useState(null);
-
+  const { userInfo } = useActiveBusiness();
   const router = useRouter();
+
+  const ownerDisplayName = [userInfo?.first_name, userInfo?.last_name]
+    .filter(Boolean)
+    .join(" ");
 
   useEffect(() => {
     if (!isMobileMenuOpen) {
@@ -75,53 +59,16 @@ export default function Sidebar() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("dashboard-user");
-
-    if (storedUser) {
-      setUserInfo(JSON.parse(storedUser));
-    }
-  }, []);
-
-  const getBusinessInfo = async () => {
-    try {
-      const data = await getBusiness(userInfo?.owner_id);
-      if (data.msg === 0) {
-        const firstBusiness = data.businesses[0];
-        localStorage.setItem(
-          "dashboard-activeBusiness",
-          JSON.stringify(firstBusiness),
-        );
-        setActiveBusiness(firstBusiness);
-        setBusinessInfo(data);
-      }
-    } catch (error) {
-      console.error("Error fetching business info:", error);
-    }
-  };
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("dashboard-user");
     if (!storedUser) {
       router.push("/login");
     }
   }, [router]);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("dashboard-user");
-    if (storedUser) {
-      setUserInfo(JSON.parse(storedUser));
-    }
-
-    getBusinessInfo();
-  }, []);
 
   const logOut = () => {
     Cookies.remove("owner-token", { path: "/" });
     localStorage.clear();
     router.push("/login");
   };
-  // console.log(userInfo);
-  // console.log(businessInfo?.owner_first_name);
-  // console.log(businessInfo?.businesses[0]);
 
   return (
     <>
@@ -152,18 +99,10 @@ export default function Sidebar() {
               پنل مدیریت
             </h1>
             <span className="text-[11px] font-bold text-indigo-500/80">
-              {businessInfo?.owner_first_name} {businessInfo?.owner_last_name}
+              {ownerDisplayName}
             </span>
           </div>
         </div>
-
-        {/* <button
-          type="button"
-          className="relative flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 active:scale-95"
-        >
-          <Bell size={19} />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
-        </button> */}
       </div>
 
       {isMobileMenuOpen && (
@@ -188,10 +127,11 @@ export default function Sidebar() {
                 <h2 className=" text-lg font-black md:text-xl">پنل مدیریت</h2>
               </div>
 
-              <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-700 ring-1 ring-white/60 md:text-sm">
-                {businessInfo?.businesses[0].owner_first_name}{" "}
-                {businessInfo?.businesses[0].owner_last_name}
-              </span>
+              {ownerDisplayName ? (
+                <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-700 ring-1 ring-white/60 md:text-sm">
+                  {ownerDisplayName}
+                </span>
+              ) : null}
             </div>
           </div>
           <button
@@ -212,10 +152,11 @@ export default function Sidebar() {
                   <h2 className=" text-lg font-black md:text-xl">پنل مدیریت</h2>
                 </div>
 
-                <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-700 ring-1 ring-white/60 md:text-sm">
-                  {businessInfo?.businesses[0].owner_first_name}{" "}
-                  {businessInfo?.businesses[0].owner_last_name}
-                </span>
+                {ownerDisplayName ? (
+                  <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-700 ring-1 ring-white/60 md:text-sm">
+                    {ownerDisplayName}
+                  </span>
+                ) : null}
               </div>
             </div>
 

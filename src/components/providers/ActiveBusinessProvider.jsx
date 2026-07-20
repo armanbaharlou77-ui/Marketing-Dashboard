@@ -2,6 +2,7 @@
 
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -12,6 +13,7 @@ import { usePathname } from "next/navigation";
 import { getBusiness } from "@/services/authService";
 
 const ACTIVE_BUSINESS_STORAGE_KEY = "dashboard-activeBusiness";
+const USER_STORAGE_KEY = "dashboard-user";
 const SYNC_AFTER_BACK_STORAGE_KEY = "dashboard-syncActiveBusinessAfterBack";
 
 const ActiveBusinessContext = createContext(null);
@@ -47,6 +49,15 @@ const getUserBusinesses = (userInfo) => {
   return [];
 };
 
+const findBusinessById = (businesses, businessId) => {
+  if (businessId == null) return null;
+  return (
+    businesses.find(
+      (business) => String(business?.id) === String(businessId),
+    ) || null
+  );
+};
+
 const getSnapshot = () => {
   if (typeof window === "undefined") {
     return JSON.stringify({
@@ -56,7 +67,7 @@ const getSnapshot = () => {
   }
 
   return JSON.stringify({
-    user: localStorage.getItem("dashboard-user"),
+    user: localStorage.getItem(USER_STORAGE_KEY),
     activeBusiness: localStorage.getItem(ACTIVE_BUSINESS_STORAGE_KEY),
   });
 };
@@ -85,9 +96,7 @@ const deriveData = (snapshot) => {
   const businesses = getUserBusinesses(userInfo);
 
   if (storedBusiness?.id != null) {
-    const matchedBusiness = businesses.find(
-      (business) => String(business?.id) === String(storedBusiness.id)
-    );
+    const matchedBusiness = findBusinessById(businesses, storedBusiness.id);
 
     return {
       activeBusiness: matchedBusiness || storedBusiness,
@@ -107,6 +116,52 @@ const emitChange = () => {
   listeners.forEach((listener) => listener());
 };
 
+const persistUserBusinesses = (
+  userInfo,
+  businesses,
+  activeBusiness,
+  ownerProfile = {},
+) => {
+  if (typeof window === "undefined" || !userInfo) {
+    return;
+  }
+
+  const nextUser = {
+    ...userInfo,
+    businesses,
+    business: activeBusiness || businesses[0] || userInfo.business || null,
+    first_name:
+      ownerProfile.first_name ||
+      userInfo.first_name ||
+      "",
+    last_name:
+      ownerProfile.last_name ||
+      userInfo.last_name ||
+      "",
+  };
+
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser));
+};
+
+const getOwnerProfileFromResponse = (response) => {
+  const firstBusiness = Array.isArray(response?.businesses)
+    ? response.businesses[0]
+    : null;
+
+  return {
+    first_name:
+      response?.owner_first_name ||
+      firstBusiness?.owner_first_name ||
+      firstBusiness?.first_name ||
+      "",
+    last_name:
+      response?.owner_last_name ||
+      firstBusiness?.owner_last_name ||
+      firstBusiness?.last_name ||
+      "",
+  };
+};
+
 const ensureStorageListener = () => {
   if (typeof window === "undefined" || storageListenerAttached) {
     return;
@@ -120,7 +175,7 @@ const ensureStorageListener = () => {
   storageHandler = (event) => {
     if (
       event.key === ACTIVE_BUSINESS_STORAGE_KEY ||
-      event.key === "user" ||
+      event.key === USER_STORAGE_KEY ||
       event.key === null
     ) {
       syncFromStorage();
@@ -145,7 +200,7 @@ const ensureStorageListener = () => {
 };
 
 const teardownStorageListener = () => {
-  if (typeof window === "undefined" || !storageListenerAttached) {
+  if (typeof window === "undefined" || storageListenerAttached === false) {
     return;
   }
 
@@ -194,16 +249,18 @@ export function ActiveBusinessProvider({ children }) {
   const pathname = usePathname();
   const [apiBusinesses, setApiBusinesses] = useState([]);
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const { activeBusiness: storedActiveBusiness, businesses: localBusinesses, userInfo } = useMemo(
-    () => deriveData(snapshot),
-    [snapshot]
-  );
+  const {
+    activeBusiness: storedActiveBusiness,
+    businesses: localBusinesses,
+    userInfo,
+  } = useMemo(() => deriveData(snapshot), [snapshot]);
 
   const businesses = apiBusinesses.length ? apiBusinesses : localBusinesses;
   const activeBusiness = useMemo(() => {
     if (storedActiveBusiness?.id != null) {
-      const matchedBusiness = businesses.find(
-        (business) => String(business?.id) === String(storedActiveBusiness.id)
+      const matchedBusiness = findBusinessById(
+        businesses,
+        storedActiveBusiness.id,
       );
 
       return matchedBusiness || storedActiveBusiness;
@@ -224,8 +281,40 @@ export function ActiveBusinessProvider({ children }) {
         const items = Array.isArray(response?.businesses)
           ? response.businesses
           : [];
+        const ownerProfile = getOwnerProfileFromResponse(response);
 
         setApiBusinesses(items);
+
+        if (items.length === 0) {
+          if (ownerProfile.first_name || ownerProfile.last_name) {
+            persistUserBusinesses(userInfo, [], null, ownerProfile);
+            emitChange();
+          }
+          return;
+        }
+
+        const storedBusiness = readJson(
+          localStorage.getItem(ACTIVE_BUSINESS_STORAGE_KEY),
+        );
+        const matchedStored = findBusinessById(items, storedBusiness?.id);
+        const nextActive = matchedStored || items[0];
+
+        // Keep user's selection when still valid; otherwise fall back to first.
+        if (!matchedStored) {
+          localStorage.setItem(
+            ACTIVE_BUSINESS_STORAGE_KEY,
+            JSON.stringify(nextActive),
+          );
+        } else {
+          // Refresh stored object with latest API data for the same id.
+          localStorage.setItem(
+            ACTIVE_BUSINESS_STORAGE_KEY,
+            JSON.stringify(matchedStored),
+          );
+        }
+
+        persistUserBusinesses(userInfo, items, nextActive, ownerProfile);
+        emitChange();
       } catch {
         setApiBusinesses([]);
       }
@@ -239,7 +328,7 @@ export function ActiveBusinessProvider({ children }) {
     emitChange();
   }, [pathname]);
 
-  const setActiveBusiness = (business) => {
+  const setActiveBusiness = useCallback((business) => {
     if (typeof window === "undefined") {
       return;
     }
@@ -247,20 +336,44 @@ export function ActiveBusinessProvider({ children }) {
     if (business) {
       localStorage.setItem(ACTIVE_BUSINESS_STORAGE_KEY, JSON.stringify(business));
 
-      // ✅ راهکار اصلی: آپدیت کردن استیت سروری برای اعمال آنی و بدون رفرش در سراسر پروژه
       setApiBusinesses((prev) => {
-        if (!Array.isArray(prev) || prev.length === 0) return [business];
+        if (!Array.isArray(prev) || prev.length === 0) {
+          return [business];
+        }
+
+        const exists = prev.some(
+          (item) => String(item?.id) === String(business.id),
+        );
+
+        if (!exists) {
+          return [...prev, business];
+        }
+
         return prev.map((item) =>
-          String(item?.id) === String(business.id) ? business : item
+          String(item?.id) === String(business.id) ? business : item,
         );
       });
 
+      const currentUser = readJson(localStorage.getItem(USER_STORAGE_KEY));
+      if (currentUser) {
+        const currentBusinesses = getUserBusinesses(currentUser);
+        const existsInUser = currentBusinesses.some(
+          (item) => String(item?.id) === String(business.id),
+        );
+        const nextBusinesses = existsInUser
+          ? currentBusinesses.map((item) =>
+              String(item?.id) === String(business.id) ? business : item,
+            )
+          : [...currentBusinesses, business];
+
+        persistUserBusinesses(currentUser, nextBusinesses, business);
+      }
     } else {
       localStorage.removeItem(ACTIVE_BUSINESS_STORAGE_KEY);
     }
 
     emitChange();
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -268,11 +381,10 @@ export function ActiveBusinessProvider({ children }) {
       businesses,
       userInfo,
       setActiveBusiness,
-      setApiBusinesses, // 👈 این خط را اضافه کنید تا در کل پروژه در دسترس باشد
+      setApiBusinesses,
     }),
-    [activeBusiness, businesses, userInfo]
+    [activeBusiness, businesses, userInfo, setActiveBusiness],
   );
-  console.log(userInfo);
 
   return (
     <ActiveBusinessContext.Provider value={value}>
@@ -281,13 +393,13 @@ export function ActiveBusinessProvider({ children }) {
   );
 }
 
-
-
 export function useActiveBusiness() {
   const context = useContext(ActiveBusinessContext);
 
   if (!context) {
-    throw new Error("useActiveBusiness must be used within ActiveBusinessProvider");
+    throw new Error(
+      "useActiveBusiness must be used within ActiveBusinessProvider",
+    );
   }
 
   return context;

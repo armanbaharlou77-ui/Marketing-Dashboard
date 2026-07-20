@@ -7,11 +7,13 @@ import PhotoGallery from "@/components/marketing/PhotoGallery";
 import Specifications from "@/components/marketing/Specifications";
 import Category from "@/components/marketing/Category";
 import { useRouter } from 'next/navigation';
-import { setBaseInfo } from '@/services/authService';
+import { getBusiness, setBaseInfo } from '@/services/authService';
+import { useActiveBusiness } from '@/components/providers/ActiveBusinessProvider';
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 
 export default function Login_Step3() {
+    const { setActiveBusiness, setApiBusinesses } = useActiveBusiness();
 
     const [businessTitle, setBusinessTitle] = useState('')
     const [shortDescription, setShortDescription] = useState('')
@@ -163,6 +165,79 @@ export default function Login_Step3() {
 
             const data = await setBaseInfo(payload)
             if (data.msg === 0) {
+                try {
+                    const storedUser = JSON.parse(
+                        localStorage.getItem("dashboard-user") || "null",
+                    );
+                    const ownerId = storedUser?.owner_id;
+                    const previousIds = new Set(
+                        (Array.isArray(storedUser?.businesses)
+                            ? storedUser.businesses
+                            : []
+                        )
+                            .map((business) => business?.id)
+                            .filter((id) => id != null)
+                            .map(String),
+                    );
+
+                    if (ownerId) {
+                        const businessResponse = await getBusiness(ownerId);
+                        const businesses = Array.isArray(
+                            businessResponse?.businesses,
+                        )
+                            ? businessResponse.businesses
+                            : [];
+
+                        if (businessResponse?.msg === 0 && businesses.length > 0) {
+                            const createdBusiness =
+                                businesses.find(
+                                    (business) =>
+                                        business?.id != null &&
+                                        !previousIds.has(String(business.id)),
+                                ) ||
+                                businesses.find(
+                                    (business) =>
+                                        business?.name === businessTitle &&
+                                        business?.address === address,
+                                ) ||
+                                businesses[businesses.length - 1];
+
+                            const ownerProfile = {
+                                first_name:
+                                    businessResponse?.owner_first_name ||
+                                    createdBusiness?.owner_first_name ||
+                                    storedUser?.first_name ||
+                                    "",
+                                last_name:
+                                    businessResponse?.owner_last_name ||
+                                    createdBusiness?.owner_last_name ||
+                                    storedUser?.last_name ||
+                                    "",
+                            };
+
+                            const nextUser = {
+                                ...storedUser,
+                                ...ownerProfile,
+                                businesses,
+                                business: createdBusiness,
+                            };
+
+                            localStorage.setItem(
+                                "dashboard-user",
+                                JSON.stringify(nextUser),
+                            );
+
+                            if (typeof setApiBusinesses === "function") {
+                                setApiBusinesses(businesses);
+                            }
+
+                            setActiveBusiness(createdBusiness);
+                        }
+                    }
+                } catch (syncError) {
+                    console.error(syncError);
+                }
+
                 toast.success(data.msg_txt || "اطلاعات با موفقیت ثبت شد")
                 router.push('/')
             } else {

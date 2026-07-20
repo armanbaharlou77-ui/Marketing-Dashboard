@@ -69,11 +69,25 @@ export default function Login_Step2() {
           return;
         }
 
-        // Set activeBusiness from first business in user's businesses
         if (data?.value?.businesses && data.value.businesses.length > 0) {
-          const firstBusiness = data.value.businesses[0];
-          localStorage.setItem("dashboard-activeBusiness", JSON.stringify(firstBusiness));
-          setActiveBusiness(firstBusiness);
+          const userBusinesses = data.value.businesses;
+          const storedActive = (() => {
+            try {
+              return JSON.parse(
+                localStorage.getItem("dashboard-activeBusiness") || "null",
+              );
+            } catch {
+              return null;
+            }
+          })();
+          const matchedStored = userBusinesses.find(
+            (business) =>
+              storedActive?.id != null &&
+              String(business?.id) === String(storedActive.id),
+          );
+          const nextActive = matchedStored || userBusinesses[0];
+
+          setActiveBusiness(nextActive);
           router.push("/");
           toast.success(data.msg_txt || "با موفقیت وارد شدید");
         } else {
@@ -106,6 +120,24 @@ export default function Login_Step2() {
       token
     )
     if (data.msg === 0) {
+      try {
+        const storedUser = JSON.parse(
+          localStorage.getItem("dashboard-user") || "null",
+        );
+        if (storedUser) {
+          localStorage.setItem(
+            "dashboard-user",
+            JSON.stringify({
+              ...storedUser,
+              first_name: firstName.trim(),
+              last_name: lastName.trim(),
+            }),
+          );
+        }
+      } catch {
+        // ignore localStorage parse errors
+      }
+
       setIsNameFormOpen(false);
       setIsLogoutModalOpen(false);
       router.push("/addNewMarketing")
