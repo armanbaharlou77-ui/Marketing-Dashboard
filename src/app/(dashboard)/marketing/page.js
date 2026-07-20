@@ -24,6 +24,7 @@ const mapBusinessToBaseInfo = (business) => ({
     "",
   businessTitle:
     business?.name || business?.title || business?.business_name || "",
+  englishName: business?.english_name || business?.englishName || "",
   shortDescription:
     business?.description ||
     business?.shortDescription ||
@@ -183,10 +184,28 @@ const getBusinessSpecifications = (business) => {
 };
 
 const getBusinessPosition = (business) => {
-  if (business?.lat && business?.lng) {
-    return { lat: Number(business.lat), lng: Number(business.lng) };
+  const lat = business?.lat;
+  const lng = business?.lng;
+
+  if (
+    lat === null ||
+    lat === undefined ||
+    lat === "" ||
+    lng === null ||
+    lng === undefined ||
+    lng === ""
+  ) {
+    return null;
   }
-  return null;
+
+  const parsedLat = Number(lat);
+  const parsedLng = Number(lng);
+
+  if (Number.isNaN(parsedLat) || Number.isNaN(parsedLng)) {
+    return null;
+  }
+
+  return { lat: parsedLat, lng: parsedLng };
 };
 
 const readUser = () => {
@@ -211,6 +230,74 @@ const extractBusinessFromResponse = (response, fallbackBusiness) => {
     : fallbackBusiness;
 };
 
+const buildUpdatedBusiness = (previousBusiness, payload, response) => {
+  const fromResponse = extractBusinessFromResponse(response, null);
+
+  return {
+    ...previousBusiness,
+    ...(fromResponse || {}),
+    id: fromResponse?.id ?? previousBusiness?.id ?? payload.businessId,
+    owner_id:
+      fromResponse?.owner_id ?? previousBusiness?.owner_id ?? payload.ownerId,
+    name:
+      fromResponse?.name ||
+      fromResponse?.title ||
+      payload.businessTitle ||
+      previousBusiness?.name ||
+      "",
+    title:
+      fromResponse?.title ||
+      fromResponse?.name ||
+      payload.businessTitle ||
+      previousBusiness?.title ||
+      "",
+    english_name:
+      fromResponse?.english_name ||
+      fromResponse?.englishName ||
+      payload.englishName ||
+      previousBusiness?.english_name ||
+      previousBusiness?.englishName ||
+      "",
+    description:
+      fromResponse?.description ||
+      payload.shortDescription ||
+      previousBusiness?.description ||
+      "",
+    address:
+      fromResponse?.address ??
+      payload.address ??
+      previousBusiness?.address ??
+      "",
+    city: fromResponse?.city || payload.city || previousBusiness?.city || "",
+    about:
+      fromResponse?.about ?? payload.about ?? previousBusiness?.about ?? "",
+    lat: fromResponse?.lat ?? payload.lat ?? previousBusiness?.lat ?? null,
+    lng: fromResponse?.lng ?? payload.lng ?? previousBusiness?.lng ?? null,
+    imgs: fromResponse?.imgs || payload.imgs || previousBusiness?.imgs || [],
+    links:
+      fromResponse?.links || payload.links || previousBusiness?.links || [],
+    socials:
+      fromResponse?.socials ||
+      payload.socials ||
+      previousBusiness?.socials ||
+      [],
+    phones:
+      fromResponse?.phones || payload.phones || previousBusiness?.phones || [],
+    specs:
+      fromResponse?.specs || payload.specs || previousBusiness?.specs || [],
+    banner:
+      fromResponse?.banner ??
+      payload.banner ??
+      previousBusiness?.banner ??
+      null,
+    category_ids:
+      fromResponse?.category_ids ||
+      payload.category_ids ||
+      previousBusiness?.category_ids ||
+      [],
+  };
+};
+
 const persistEditedBusiness = (business, userInfo, setActiveBusiness) => {
   if (!business) return;
 
@@ -221,23 +308,29 @@ const persistEditedBusiness = (business, userInfo, setActiveBusiness) => {
   if (!user) return;
 
   const businessId = business?.id;
-  const nextBusinesses = Array.isArray(user.businesses)
-    ? businessId != null
-      ? [
-          ...user.businesses.filter(
-            (item) => String(item?.id) !== String(businessId),
-          ),
-          business,
-        ]
-      : [...user.businesses, business]
-    : undefined;
+  let nextBusinesses;
+
+  if (!Array.isArray(user.businesses)) {
+    nextBusinesses = [business];
+  } else if (businessId == null) {
+    nextBusinesses = [...user.businesses, business];
+  } else {
+    const exists = user.businesses.some(
+      (item) => String(item?.id) === String(businessId),
+    );
+    nextBusinesses = exists
+      ? user.businesses.map((item) =>
+          String(item?.id) === String(businessId) ? business : item,
+        )
+      : [...user.businesses, business];
+  }
 
   localStorage.setItem(
     "dashboard-user",
     JSON.stringify({
       ...user,
       business,
-      businesses: nextBusinesses ?? user.businesses,
+      businesses: nextBusinesses,
     }),
   );
 };
@@ -368,6 +461,7 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
       businessId,
       ownerId: business?.owner_id,
       businessTitle: baseInfo.businessTitle,
+      englishName: baseInfo.englishName,
       shortDescription: baseInfo.shortDescription,
       address: baseInfo.address,
       city: baseInfo.city,
@@ -392,7 +486,11 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
       const response = await setBusiness(payload);
 
       if (response?.msg === 0) {
-        const updatedBusiness = extractBusinessFromResponse(response, payload);
+        const updatedBusiness = buildUpdatedBusiness(
+          business,
+          payload,
+          response,
+        );
         persistEditedBusiness(updatedBusiness, userInfo, setActiveBusiness);
         toast.success(response.msg_txt || "تغییرات با موفقیت ذخیره شد.");
       } else {
@@ -440,7 +538,7 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
       {/* فضای خالی تا آخرین فیلدها زیر دکمه ثابت نمانند */}
       <div className="h-20" aria-hidden />
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center px-4 md:right-80 sm:bottom-6 sm:justify-end sm:px-6 lg:px-8">
+      <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center px-4 md:left-4 xl:left-30 sm:bottom-10 sm:justify-end sm:px-6 lg:px-8">
         <div className="pointer-events-auto w-full max-w-[900px] sm:flex sm:justify-end">
           <button
             type="button"

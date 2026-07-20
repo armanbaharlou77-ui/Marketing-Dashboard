@@ -12,6 +12,7 @@ const LocationPicker = dynamic(
 
 export default function BaseInfo({
   businessTitle = "",
+  englishName = "",
   shortDescription = "",
   about = "",
   address = "",
@@ -202,6 +203,25 @@ export default function BaseInfo({
           )}
         </div>
 
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-700 md:text-md">
+            نام انگلیسی کسب و کار
+          </label>
+          <input
+            id="englishName"
+            name="englishName"
+            value={englishName}
+            onChange={(e) => safeChange({ englishName: e.target.value })}
+            className={errorClass("englishName")}
+            type="text"
+            dir="ltr"
+            placeholder="Yas Perfume Store"
+          />
+          {errors.englishName && (
+            <p className="mt-1 text-sm text-red-600">{errors.englishName}</p>
+          )}
+        </div>
+
         <div className="space-y-1 md:col-span-2">
           <label className="text-sm font-medium text-gray-700 md:text-md">
             درباره کسب و کار
@@ -211,7 +231,7 @@ export default function BaseInfo({
             name="about"
             value={about}
             onChange={(e) => safeChange({ about: e.target.value })}
-            className={`mt-2 h-34 w-full resize-none rounded-xl border border-gray-300 bg-white/70 p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.about ? "border-red-400 ring-1 ring-red-400" : ""
+            className={`mt-2 h-38 w-full resize-none rounded-xl border border-gray-300 bg-white/70 p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.about ? "border-red-400 ring-1 ring-red-400" : ""
               }`}
             placeholder="فروشگاه ما با بیش از 10 سال سابقه در زمینه عطر و ادکلن فعالیت می‌کند."
           />
@@ -229,7 +249,7 @@ export default function BaseInfo({
             name="address"
             value={address}
             onChange={(e) => safeChange({ address: e.target.value })}
-            className={`mt-2 h-28 w-full resize-none rounded-xl border border-gray-300 bg-white/70 p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.address ? "border-red-400 ring-1 ring-red-400" : ""
+            className={`mt-2 h-24 w-full resize-none rounded-xl border border-gray-300 bg-white/70 p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.address ? "border-red-400 ring-1 ring-red-400" : ""
               }`}
           />
           {errors.address && (

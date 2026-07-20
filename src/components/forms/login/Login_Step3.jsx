@@ -16,6 +16,7 @@ export default function Login_Step3() {
     const { setActiveBusiness, setApiBusinesses } = useActiveBusiness();
 
     const [businessTitle, setBusinessTitle] = useState('')
+    const [englishName, setEnglishName] = useState('')
     const [shortDescription, setShortDescription] = useState('')
     const [about, setAbout] = useState('')
     const [address, setAddress] = useState('')
@@ -40,31 +41,32 @@ export default function Login_Step3() {
 
     const handleInfoChange = useCallback((info = {}) => {
         if (info.businessTitle !== undefined) setBusinessTitle(info.businessTitle)
+        if (info.englishName !== undefined) setEnglishName(info.englishName)
         if (info.shortDescription !== undefined) setShortDescription(info.shortDescription)
         if (info.about !== undefined) setAbout(info.about)
         if (info.address !== undefined) setAddress(info.address)
         if (info.city !== undefined) setCity(info.city)
     }, [])
 
-    const handleGalleryChange = useCallback((items = []) => {
-        setGalleryItems(items)
-    }, [])
+    // const handleGalleryChange = useCallback((items = []) => {
+    //     setGalleryItems(items)
+    // }, [])
 
-    const handleBannerChange = useCallback((item) => {
-        setBannerItem(item)
-    }, [])
+    // const handleBannerChange = useCallback((item) => {
+    //     setBannerItem(item)
+    // }, [])
 
-    const handleContactChange = useCallback((nextContactData = {}) => {
-        setContactData({
-            phones: nextContactData.phones || [],
-            links: nextContactData.links || [],
-            socials: nextContactData.socials || [],
-        })
-    }, [])
+    // const handleContactChange = useCallback((nextContactData = {}) => {
+    //     setContactData({
+    //         phones: nextContactData.phones || [],
+    //         links: nextContactData.links || [],
+    //         socials: nextContactData.socials || [],
+    //     })
+    // }, [])
 
-    const handleSpecificationsChange = useCallback((nextSpecifications = []) => {
-        setSpecificationsData(nextSpecifications || [])
-    }, [])
+    // const handleSpecificationsChange = useCallback((nextSpecifications = []) => {
+    //     setSpecificationsData(nextSpecifications || [])
+    // }, [])
 
     const fieldScrollMap = {
         businessTitle: 'businessTitle',
@@ -92,6 +94,7 @@ export default function Login_Step3() {
 
         if (!businessTitle.trim()) nextErrors.businessTitle = 'عنوان کسب و کار الزامی است.'
         if (!shortDescription.trim()) nextErrors.shortDescription = 'توضیح کوتاه الزامی است.'
+        if (!englishName.trim()) nextErrors.englishName = 'نام انگلیسی الزامی است.'
         if (!about.trim()) nextErrors.about = 'درباره کسب و کار الزامی است.'
         if (!address.trim()) nextErrors.address = 'آدرس الزامی است.'
 
@@ -148,6 +151,7 @@ export default function Login_Step3() {
             const payload = {
                 businessId: 0,
                 businessTitle,
+                englishName,
                 shortDescription,
                 address,
                 city,
@@ -165,31 +169,59 @@ export default function Login_Step3() {
 
             const data = await setBaseInfo(payload)
             if (data.msg === 0) {
+                const extractBusinessFromResponse = (response) => {
+                    const candidate =
+                        response?.business ||
+                        response?.value ||
+                        response?.data ||
+                        response?.result ||
+                        response?.item;
+                    return candidate && typeof candidate === "object" && !Array.isArray(candidate)
+                        ? candidate
+                        : null;
+                };
+
+                const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
                 try {
                     const storedUser = JSON.parse(
                         localStorage.getItem("dashboard-user") || "null",
                     );
                     const ownerId = storedUser?.owner_id;
+
+                    const previousBusinesses = Array.isArray(storedUser?.businesses)
+                        ? storedUser.businesses
+                        : storedUser?.business
+                          ? [storedUser.business]
+                          : [];
+
                     const previousIds = new Set(
-                        (Array.isArray(storedUser?.businesses)
-                            ? storedUser.businesses
-                            : []
-                        )
+                        previousBusinesses
                             .map((business) => business?.id)
                             .filter((id) => id != null)
                             .map(String),
                     );
 
-                    if (ownerId) {
-                        const businessResponse = await getBusiness(ownerId);
-                        const businesses = Array.isArray(
-                            businessResponse?.businesses,
-                        )
-                            ? businessResponse.businesses
-                            : [];
+                    if (!ownerId) {
+                        toast.success(data.msg_txt || "اطلاعات با موفقیت ثبت شد")
+                        router.push('/')
+                        return;
+                    }
 
-                        if (businessResponse?.msg === 0 && businesses.length > 0) {
-                            const createdBusiness =
+                    // 1) اول اگر سرور خود آبجکت business برگرداند، همان را استفاده می‌کنیم.
+                    let createdBusiness = extractBusinessFromResponse(data);
+
+                    // 2) اگر هنوز business جدید از API در لیست نیامده (تاخیر سرور)، چند بار با فاصله دوباره می‌گیریم.
+                    let businesses = [];
+                    if (!createdBusiness?.id) {
+                        const attempts = 4;
+                        for (let attempt = 0; attempt < attempts; attempt++) {
+                            const businessResponse = await getBusiness(ownerId);
+                            businesses = Array.isArray(businessResponse?.businesses)
+                                ? businessResponse.businesses
+                                : [];
+
+                            createdBusiness =
                                 businesses.find(
                                     (business) =>
                                         business?.id != null &&
@@ -200,39 +232,61 @@ export default function Login_Step3() {
                                         business?.name === businessTitle &&
                                         business?.address === address,
                                 ) ||
-                                businesses[businesses.length - 1];
+                                null;
 
-                            const ownerProfile = {
-                                first_name:
-                                    businessResponse?.owner_first_name ||
-                                    createdBusiness?.owner_first_name ||
-                                    storedUser?.first_name ||
-                                    "",
-                                last_name:
-                                    businessResponse?.owner_last_name ||
-                                    createdBusiness?.owner_last_name ||
-                                    storedUser?.last_name ||
-                                    "",
-                            };
-
-                            const nextUser = {
-                                ...storedUser,
-                                ...ownerProfile,
-                                businesses,
-                                business: createdBusiness,
-                            };
-
-                            localStorage.setItem(
-                                "dashboard-user",
-                                JSON.stringify(nextUser),
-                            );
-
-                            if (typeof setApiBusinesses === "function") {
-                                setApiBusinesses(businesses);
-                            }
-
-                            setActiveBusiness(createdBusiness);
+                            if (createdBusiness?.id) break;
+                            await sleep(900 + attempt * 500);
                         }
+                    } else {
+                        // اگر از response اومده، فعلا لیست را برای selector هم می‌گیریم.
+                        const businessResponse = await getBusiness(ownerId);
+                        businesses = Array.isArray(businessResponse?.businesses)
+                            ? businessResponse.businesses
+                            : [];
+                    }
+
+                    // اگر پیدا نشد، حداقل آخرین مورد لیست را fallback می‌گیریم.
+                    if (!createdBusiness?.id && Array.isArray(businesses) && businesses.length > 0) {
+                        createdBusiness = businesses[businesses.length - 1];
+                    }
+
+                    if (createdBusiness?.id) {
+                        // برای جلوگیری از race، نهایی‌ترین لیست را یک بار می‌گیریم.
+                        const businessResponse = await getBusiness(ownerId);
+                        businesses = Array.isArray(businessResponse?.businesses)
+                            ? businessResponse.businesses
+                            : [];
+
+                        const ownerProfile = {
+                            first_name:
+                                businessResponse?.owner_first_name ||
+                                createdBusiness?.owner_first_name ||
+                                storedUser?.first_name ||
+                                "",
+                            last_name:
+                                businessResponse?.owner_last_name ||
+                                createdBusiness?.owner_last_name ||
+                                storedUser?.last_name ||
+                                "",
+                        };
+
+                        const nextUser = {
+                            ...storedUser,
+                            ...ownerProfile,
+                            businesses,
+                            business: createdBusiness,
+                        };
+
+                        localStorage.setItem(
+                            "dashboard-user",
+                            JSON.stringify(nextUser),
+                        );
+
+                        if (typeof setApiBusinesses === "function") {
+                            setApiBusinesses(businesses);
+                        }
+
+                        setActiveBusiness(createdBusiness);
                     }
                 } catch (syncError) {
                     console.error(syncError);
@@ -267,6 +321,7 @@ export default function Login_Step3() {
             <div className="space-y-8 sm:space-y-12">
                 <BaseInfo
                     businessTitle={businessTitle}
+                    englishName={englishName}
                     shortDescription={shortDescription}
                     about={about}
                     address={address}

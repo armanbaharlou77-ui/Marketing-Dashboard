@@ -1,31 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+
+const hasCompletedProfile = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("dashboard-user") || "null");
+    return Boolean(user?.first_name || user?.last_name);
+  } catch {
+    return false;
+  }
+};
+
+const clearAuthSession = () => {
+  Cookies.remove("owner-token", { path: "/" });
+  localStorage.clear();
+};
 
 export default function AuthGuard({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  // const token = Cookies.get("owner-token");
-  console.log(pathname);
-  console.log(pathname !== "/login/");
-  console.log(pathname === "/login/");
-  // console.log(!token);
 
   useEffect(() => {
     const token = Cookies.get("owner-token");
-    if (!token && !pathname.includes("login")) {
-      //login/authentication/
-      // کاربر را بلافاصله به صفحه لاگین هدایت کن
-      return router.push("/login");
+    const isLoginRoute = pathname.includes("login");
+
+    if (!token && !isLoginRoute) {
+      router.push("/login");
+      return;
     }
-    // ۳. اگر توکن داشت و می‌خواست دوباره به صفحه لاگین برود، او را به داشبورد یا صفحه اصلی بفرست
-    if (token && pathname.includes("login")) {
-      return router.push("/");
+
+    if (token && isLoginRoute) {
+      // Incomplete registration (OTP done, name not set): allow auth page,
+      // but clear session if user returns to phone entry.
+      if (!hasCompletedProfile()) {
+        if (pathname.includes("authentication")) {
+          return;
+        }
+
+        clearAuthSession();
+        return;
+      }
+
+      router.push("/");
     }
   }, [pathname, router]);
 
-  // Step1 و Step2 از همان فریم اول نشان داده شوند — نه بعد از useEffect
   return children;
 }

@@ -12,9 +12,8 @@ import ContactInfo from "@/components/marketing/ContactInfo";
 import PhotoGallery from "@/components/marketing/PhotoGallery";
 import Specifications from "@/components/marketing/Specifications";
 import Category from "@/components/marketing/Category";
-import { getBusiness, getOwner, setBusiness } from "@/services/authService";
+import { getBusiness, setBusiness } from "@/services/authService";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
-import Select from "react-select";
 import { toast } from "react-toastify";
 
 const getBusinessPosition = (biz) => {
@@ -36,6 +35,7 @@ export default function AddBusinessModal({
 
   const [baseInfo, setBaseInfo] = useState({
     businessTitle: "",
+    englishName: "",
     shortDescription: "",
     about: "",
     address: "",
@@ -51,9 +51,6 @@ export default function AddBusinessModal({
     links: [],
     socials: [],
   });
-  const [users, setUsers] = useState();
-  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState(null);
   const [errors, setErrors] = useState({});
   const [specificationsData, setSpecificationsData] = useState([]);
   const [galleryItems, setGalleryItems] = useState([
@@ -83,6 +80,7 @@ export default function AddBusinessModal({
 
   const mapBusinessToBaseInfo = (biz) => ({
     businessTitle: biz?.name || biz?.title || biz?.business_name || "",
+    englishName: biz?.english_name || biz?.englishName || "",
     shortDescription:
       biz?.description || biz?.shortDescription || biz?.short_description || "",
     about: biz?.about || biz?.long_description || biz?.details || "",
@@ -201,7 +199,6 @@ export default function AddBusinessModal({
   };
 
   const fieldScrollMap = {
-    selectedUserId: "userSelectSection", // اضافه شدن آیدی بخش انتخاب کاربر برای اسکرول
     businessTitle: "businessTitle",
     shortDescription: "shortDescription",
     about: "about",
@@ -325,6 +322,7 @@ export default function AddBusinessModal({
       // opening in add-new mode: clear
       setBaseInfo({
         businessTitle: "",
+        englishName: "",
         shortDescription: "",
         about: "",
         address: "",
@@ -336,23 +334,24 @@ export default function AddBusinessModal({
       setSpecificationsData([]);
       setGalleryItems([createEmptyGalleryItem(1)]);
       setErrors({});
-      setSelectedUserId(null);
-      setSelectedCategories([]);// ریست کردن انتخاب کاربر
+      setSelectedCategories([]);
     }
   }, [business, open]);
 
   const isEditMode = Boolean(business);
+  const currentOwnerId = userInfo?.owner_id || getStoredUser()?.owner_id;
 
   const handleSubmit = async () => {
     const nextErrors = {};
 
-    // اعتبارسنجی انتخاب کاربر فقط در حالت ایجاد کسب و کار جدید
-    if (!isEditMode && !selectedUserId) {
-      nextErrors.selectedUserId = "انتخاب کاربر برای ثبت کسب و کار الزامی است.";
+    if (!isEditMode && !currentOwnerId) {
+      nextErrors.ownerId = "شناسه کاربر یافت نشد. لطفا دوباره وارد شوید.";
     }
 
     if (!baseInfo.businessTitle.trim())
       nextErrors.businessTitle = "عنوان کسب و کار الزامی است.";
+    if (!baseInfo.englishName.trim())
+      nextErrors.englishName = "نام انگلیسی کسب و کار الزامی است.";
     if (!baseInfo.shortDescription.trim())
       nextErrors.shortDescription = "توضیح کوتاه الزامی است.";
     if (!baseInfo.about.trim())
@@ -398,6 +397,7 @@ export default function AddBusinessModal({
           businessId: business?.id ?? 0,
           ownerId: business?.owner_id,
           businessTitle: baseInfo.businessTitle,
+          englishName: baseInfo.englishName,
           shortDescription: baseInfo.shortDescription,
           address: baseInfo.address,
           city: baseInfo.city,
@@ -440,8 +440,9 @@ export default function AddBusinessModal({
       try {
         const payload = {
           businessId: 0,
-          ownerId: selectedUserId,
+          ownerId: currentOwnerId,
           businessTitle: baseInfo.businessTitle,
+          englishName: baseInfo.englishName,
           shortDescription: baseInfo.shortDescription,
           address: baseInfo.address,
           city: baseInfo.city,
@@ -460,9 +461,7 @@ export default function AddBusinessModal({
         const response = await setBusiness(payload);
 
         if (response?.msg === 0) {
-          if (!isEditMode) {
-            await syncBusinessesAfterCreate();
-          }
+          await syncBusinessesAfterCreate();
           toast.success(
             response.msg_txt || "کسب و کار با موفقیت ثبت شد."
           );
@@ -483,173 +482,32 @@ export default function AddBusinessModal({
     }
   };
 
-  const fetchUsers = async () => {
-    setIsLoadingUsers(true);
-    try {
-      const usersData = await getOwner();
-      setUsers(usersData.users || []);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    } finally {
-      setIsLoadingUsers(false);
-    }
-  };
-
-  useEffect(() => {
-    if (open && !isEditMode) {
-      fetchUsers();
-    }
-  }, [open, isEditMode]);
-
-  // تبدیل لیست کاربران به فرمت استاندارد react-select
-  const userOptions = Array.isArray(users)
-    ? users.map((user) => {
-      const fullName =
-        [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
-        "نامشخص";
-      return {
-        value: user?.owner_id,
-        label: `${fullName} (${user?.mobile || "بدون شماره"})`,
-      };
-    })
-    : [];
-
-  // پیدا کردن کاربر انتخاب شده فعلی برای نمایش در سلکت
-  const currentUserOption =
-    userOptions.find((option) => option.value === selectedUserId) || null;
-
-  console.log(business);
-  console.log(position);
-  console.log(bannerItem);
-
-
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="flex flex-col gap-0 w-full h-[100dvh] max-w-none max-h-none rounded-none border-0 bg-linear-to-b from-white via-slate-50 to-slate-100 p-0 pt-14 md:pt-12 sm:pt-0 overflow-hidden shadow-none sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:w-[90vw] sm:max-w-[90vw] md:w-[60vw] md:max-w-[70vw] lg:max-w-[1200px] sm:rounded-[1.5rem] sm:shadow-[0_30px_120px_rgba(15,23,42,0.22)]"
+        className="flex flex-col gap-0 w-full h-[100dvh] max-w-none max-h-none rounded-none border-0 bg-linear-to-b from-white via-slate-50 to-slate-100 p-0 pt-14 md:pt-12 sm:pt-0 overflow-hidden shadow-none sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:w-[90vw] sm:max-w-[90vw] md:w-[60vw] md:max-w-[70vw] lg:max-w-[900px] sm:rounded-[1.5rem] sm:shadow-[0_30px_120px_rgba(15,23,42,0.22)]"
       >
         <div
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto px-4 pb-4 sm:px-6 sm:py-6 custom-scrollbar"
+          className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-6 sm:py-6 custom-scrollbar"
         >
-          {/* هدر مودال - مارجین بالا (mt) در موبایل حذف شده تا دقیقاً زیر منطقه امن قرار بگیرد */}
           <DialogHeader className="mb-6 sm:mb-8 rounded-[1.25rem] sm:rounded-[1.75rem] bg-slate-600 px-4 sm:px-5 py-4 sm:py-5 text-center sm:text-right text-white shadow-lg shadow-slate-900/10">
             <DialogTitle className="md:text-lg text-base font-black">
               {isEditMode ? "ویرایش کسب و کار" : "افزودن کسب و کار جدید"}
             </DialogTitle>
           </DialogHeader>
 
-          {!isEditMode && (
-            <div
-              id="userSelectSection"
-              className={`mb-4 sm:mb-6 rounded-xl sm:rounded-2xl border bg-white p-4 sm:p-5 shadow-sm transition-all ${errors.selectedUserId ? "border-red-300 ring-1 ring-red-100" : "border-slate-100 ring-1 ring-slate-900/5"
-                }`}
-            >
-              <label className="block mb-2 sm:mb-3 text-base sm:text-base font-bold text-slate-700">
-                انتخاب کاربر <span className="text-red-500">*</span>
-              </label>
-
-              <Select
-                options={userOptions}
-                value={currentUserOption}
-                onChange={(option) => {
-                  setSelectedUserId(option ? option.value : null);
-                  // به محض انتخاب، ارور پاک شود
-                  clearFieldErrors(['selectedUserId']);
-                }}
-                isLoading={isLoadingUsers}
-                placeholder="-- یک کاربر را انتخاب کنید --"
-                loadingMessage={() => "در حال بارگذاری کاربران..."}
-                noOptionsMessage={() => "کاربری یافت نشد"}
-                isClearable={true}
-                isSearchable={true}
-                dir="rtl"
-                maxMenuHeight={220}
-                className="text-sm"
-                styles={{
-                  control: (base, state) => ({
-                    ...base,
-                    backgroundColor: "#f8fafc",
-                    borderColor: state.isFocused ? "#4f46e5" : errors.selectedUserId ? "#fca5a5" : "#e2e8f0",
-                    borderRadius: "0.75rem",
-                    padding: "1px 2px",
-                    boxShadow: state.isFocused
-                      ? "0 0 0 3px rgba(79, 70, 229, 0.1)"
-                      : "none",
-                    cursor: "pointer",
-                    minHeight: "42px",
-                    "&:hover": {
-                      borderColor: state.isFocused ? "#4f46e5" : errors.selectedUserId ? "#ef4444" : "#cbd5e1",
-                    },
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    borderRadius: "0.75rem",
-                    overflow: "hidden",
-                    boxShadow:
-                      "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-                    border: "1px solid #f1f5f9",
-                    zIndex: 50,
-                  }),
-                  menuList: (base) => ({
-                    ...base,
-                    "::-webkit-scrollbar": { width: "5px" },
-                    "::-webkit-scrollbar-track": { background: "#f1f5f9" },
-                    "::-webkit-scrollbar-thumb": {
-                      background: "#cbd5e1",
-                      borderRadius: "4px",
-                    },
-                    "::-webkit-scrollbar-thumb:hover": {
-                      background: "#94a3b8",
-                    },
-                  }),
-                  option: (base, state) => ({
-                    ...base,
-                    backgroundColor: state.isSelected
-                      ? "#4f46e5"
-                      : state.isFocused
-                        ? "#f1f5f9"
-                        : "transparent",
-                    color: state.isSelected ? "#ffffff" : "#334155",
-                    cursor: "pointer",
-                    fontSize: "0.875rem",
-                    padding: "10px 14px",
-                    "&:active": {
-                      backgroundColor: "#4f46e5",
-                    },
-                  }),
-                  placeholder: (base) => ({
-                    ...base,
-                    color: "#94a3b8",
-                    fontSize: "0.875rem",
-                  }),
-                  singleValue: (base) => ({
-                    ...base,
-                    color: "#334155",
-                    fontSize: "0.875rem",
-                  }),
-                }}
-              />
-              {/* نمایش ارور زیر فیلد در صورت عدم انتخاب */}
-              {errors.selectedUserId && (
-                <p className="text-[11px] sm:text-xs text-red-500 text-right mt-2 font-medium">
-                  {errors.selectedUserId}
-                </p>
-              )}
-            </div>
-          )}
-
           <div className="space-y-4 sm:space-y-5">
             <BaseInfo
               showNameFields={false}
               businessTitle={baseInfo.businessTitle}
+              englishName={baseInfo.englishName}
               shortDescription={baseInfo.shortDescription}
               about={baseInfo.about}
               address={baseInfo.address}
               city={baseInfo.city}
-              position={position}        // <--- پاس دادن موقعیت فعلی
-              setPosition={setPosition}  // <--- پاس دادن تابع تغییر موقعیت
+              position={position}
+              setPosition={setPosition}
               errors={errors}
               onInfoChange={(info) => {
                 clearFieldErrors(Object.keys(info));
@@ -670,7 +528,7 @@ export default function AddBusinessModal({
                 clearFieldErrors(["gallery"]);
                 setGalleryItems(items);
               }}
-              bannerItem={bannerItem}       // پاس دادن بنر
+              bannerItem={bannerItem}
               onBannerChange={setBannerItem}
               error={errors.gallery}
             />
@@ -685,19 +543,21 @@ export default function AddBusinessModal({
               onContactChange={setContactData}
             />
           </div>
+        </div>
 
-          <div className="mt-8 flex flex-col-reverse gap-3 pb-6 sm:pb-0 sm:flex-row sm:justify-end">
+        <div className="shrink-0 border-t border-slate-200/80 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:px-6 sm:py-4">
+          <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="w-full rounded-xl bg-white px-5 py-4 sm:py-2.5 text-base sm:text-base font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 sm:w-auto"
+              className="w-full rounded-xl bg-white px-5 py-3.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 active:scale-[0.98] sm:w-auto sm:min-w-28 sm:py-2.5"
             >
               بستن
             </button>
             <button
               type="button"
               onClick={handleSubmit}
-              className="w-full rounded-xl bg-indigo-600 px-5 py-4 sm:py-2.5 text-base sm:text-base font-bold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-700 sm:w-auto"
+              className="w-full rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-700 active:scale-[0.98] sm:w-auto sm:min-w-36 sm:py-2.5"
             >
               {isEditMode ? "ذخیره تغییرات" : "ثبت کسب و کار"}
             </button>
