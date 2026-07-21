@@ -78,40 +78,56 @@ export default function Page() {
     };
   }, [activeBusinessId]);
 
-  console.log(products);
+  console.log(activeBusiness);
 
 
   return (
-    <div className="space-y-8 text-black">
-      <div className="rounded-xl flex justify-between border border-gray-300 bg-slate-100 p-4 md:p-6 shadow-lg">
-        <h1 className="w-fit border-b-2 border-blue-400 md:text-2xl text-lg  font-bold">
-          لیست محصولات
-        </h1>
-        <button className="rounded-lg bg-blue-500 px-4 py-2 text-md font-medium text-white hover:bg-blue-600 transition-all"
-          onClick={handleAddProduct}>
-          افزودن محصول
-        </button>
-      </div>
+    <>
+      {
+        activeBusiness.status === 0 ? (
+          <div className="text-black">
+            امکان افزودن یا ویرایش کسب و کار وجود ندارد
+          </div>
+        ) : activeBusiness.status === 2 ? (
+          <div className="text-black">
+            امکان افزودن یا ویرایش کسب و کار وجود ندارد
+          </div>
+        ) : (
+          <div className="space-y-8 text-black">
+            <div className="rounded-xl flex justify-between border border-gray-300 bg-slate-100 p-4 md:p-6 shadow-lg">
+              <h1 className="w-fit border-b-2 border-blue-400 md:text-2xl text-lg  font-bold">
+                لیست محصولات
+              </h1 >
+              <button className="rounded-lg bg-blue-500 px-4 py-2 text-md font-medium text-white hover:bg-blue-600 transition-all"
+                onClick={handleAddProduct}>
+                افزودن محصول
+              </button>
+            </div >
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ">
-        {products?.map((product) => (
-          <PostCard
-            key={product.id}
-            product={product}
-            handleEditClick={handleEditClick}
-          />
-        ))}
-      </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ">
+              {products?.map((product) => (
+                <PostCard
+                  key={product.id}
+                  product={product}
+                  handleEditClick={handleEditClick}
+                />
+              ))}
+            </div>
 
-      <AddProductModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedProduct(null);
-        }}
-        product={selectedProduct}
-        onSuccess={fetchFeed}
-      />
-    </div >
+            <AddProductModal
+              isOpen={isModalOpen}
+              onClose={() => {
+                setIsModalOpen(false);
+                setSelectedProduct(null);
+              }}
+              product={selectedProduct}
+              onSuccess={fetchFeed}
+            />
+          </div >
+        )
+      }
+
+    </>
+
   );
 }

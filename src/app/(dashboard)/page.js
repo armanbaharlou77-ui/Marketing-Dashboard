@@ -13,7 +13,7 @@ export default function DashboardPage() {
 
   const statusConfig = {
     0: {
-      text: "در انتظار تایید ادمین",
+      text: "در انتظار تایید اولیه ",
       badge: "bg-amber-100 text-amber-700 border-amber-200",
       card: "border-amber-300 bg-amber-50",
     },

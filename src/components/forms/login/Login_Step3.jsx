@@ -7,7 +7,7 @@ import PhotoGallery from "@/components/marketing/PhotoGallery";
 import Specifications from "@/components/marketing/Specifications";
 import Category from "@/components/marketing/Category";
 import { useRouter } from 'next/navigation';
-import { getBusiness, setBaseInfo } from '@/services/authService';
+import { getBusiness, setBaseInfoApi } from '@/services/authService';
 import { useActiveBusiness } from '@/components/providers/ActiveBusinessProvider';
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
@@ -167,7 +167,7 @@ export default function Login_Step3() {
                 // category_ids: selectedCategories || []
             }
 
-            const data = await setBaseInfo(payload)
+            const data = await setBaseInfoApi(payload)
             if (data.msg === 0) {
                 const extractBusinessFromResponse = (response) => {
                     const candidate =
@@ -192,8 +192,8 @@ export default function Login_Step3() {
                     const previousBusinesses = Array.isArray(storedUser?.businesses)
                         ? storedUser.businesses
                         : storedUser?.business
-                          ? [storedUser.business]
-                          : [];
+                            ? [storedUser.business]
+                            : [];
 
                     const previousIds = new Set(
                         previousBusinesses

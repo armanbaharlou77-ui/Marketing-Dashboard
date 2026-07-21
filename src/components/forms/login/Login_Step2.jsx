@@ -310,9 +310,9 @@ export default function Login_Step2() {
       </div>
       {isLogoutModalOpen && (
         <Dialog open={isLogoutModalOpen} onOpenChange={setIsLogoutModalOpen}>
-          <DialogContent className="rounded-3xl flex flex-col sm:max-w-md">
+          <DialogContent className="rounded-3xl flex flex-col sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle className="mr-6 text-lg font-bold">
+              <DialogTitle className="text-lg font-bold">
                 در حال حاضر کسب و کاری برای شما ثبت نشده است
               </DialogTitle>
             </DialogHeader>
@@ -363,11 +363,10 @@ export default function Login_Step2() {
                     setFirstName(e.target.value);
                     if (nameFormError) setNameFormError("");
                   }}
-                  className={`w-full rounded-xl border px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 ${
-                    nameFormError && !firstName.trim()
-                      ? "border-red-500 bg-red-50"
-                      : "border-slate-200 bg-slate-50"
-                  }`}
+                  className={`w-full rounded-xl border px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 ${nameFormError && !firstName.trim()
+                    ? "border-red-500 bg-red-50"
+                    : "border-slate-200 bg-slate-50"
+                    }`}
                   placeholder="نام"
                 />
               </div>
@@ -383,11 +382,10 @@ export default function Login_Step2() {
                     setLastName(e.target.value);
                     if (nameFormError) setNameFormError("");
                   }}
-                  className={`w-full rounded-xl border px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 ${
-                    nameFormError && !lastName.trim()
-                      ? "border-red-500 bg-red-50"
-                      : "border-slate-200 bg-slate-50"
-                  }`}
+                  className={`w-full rounded-xl border px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 ${nameFormError && !lastName.trim()
+                    ? "border-red-500 bg-red-50"
+                    : "border-slate-200 bg-slate-50"
+                    }`}
                   placeholder="نام خانوادگی"
                 />
               </div>

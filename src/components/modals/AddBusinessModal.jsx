@@ -12,7 +12,7 @@ import ContactInfo from "@/components/marketing/ContactInfo";
 import PhotoGallery from "@/components/marketing/PhotoGallery";
 import Specifications from "@/components/marketing/Specifications";
 import Category from "@/components/marketing/Category";
-import { getBusiness, setBusiness } from "@/services/authService";
+import { getBusiness, setBusiness, setBaseInfoApi } from "@/services/authService";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
 import { toast } from "react-toastify";
 
@@ -362,26 +362,26 @@ export default function AddBusinessModal({
       (item) => item.image || item.imagePreview || item.uploadedUrl,
     );
 
-    if (!hasSelectedImage) nextErrors.gallery = "حداقل یک عکس باید انتخاب شود.";
+    // if (!hasSelectedImage) nextErrors.gallery = "حداقل یک عکس باید انتخاب شود.";
 
     const pendingUpload = galleryItems.some(
       (item) => item.image && !item.uploadedUrl && item.uploading,
     );
 
-    if (pendingUpload)
-      nextErrors.gallery = "لطفا صبر کنید تا آپلود عکس‌ها کامل شود.";
+    // if (pendingUpload)
+    //   nextErrors.gallery = "لطفا صبر کنید تا آپلود عکس‌ها کامل شود.";
 
-    const uploadedImgs = galleryItems
-      .filter((item) => item.uploadedUrl)
-      .map((item) => ({
-        url: item.uploadedUrl,
-        title: item.title || "",
-        alt: item.alt || "",
-      }));
+    // const uploadedImgs = galleryItems
+    //   .filter((item) => item.uploadedUrl)
+    //   .map((item) => ({
+    //     url: item.uploadedUrl,
+    //     title: item.title || "",
+    //     alt: item.alt || "",
+    //   }));
 
-    if (hasSelectedImage && !pendingUpload && uploadedImgs.length === 0) {
-      nextErrors.gallery = "حداقل یک عکس آپلود شده باید وجود داشته باشد.";
-    }
+    // if (hasSelectedImage && !pendingUpload && uploadedImgs.length === 0) {
+    //   nextErrors.gallery = "حداقل یک عکس آپلود شده باید وجود داشته باشد.";
+    // }
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -404,16 +404,16 @@ export default function AddBusinessModal({
           about: baseInfo.about,
           lat: position ? position.lat : null,
           lng: position ? position.lng : null,
-          imgs: uploadedImgs,
-          links: contactData.links || [],
-          socials: contactData.socials || [],
-          phones: contactData.phones || [],
-          specs: specificationsData || [],
-          banner: bannerItem?.imagePreview || null,
-          category_ids: selectedCategories || []
+          // imgs: uploadedImgs,
+          // links: contactData.links || [],
+          // socials: contactData.socials || [],
+          // phones: contactData.phones || [],
+          // specs: specificationsData || [],
+          // banner: bannerItem?.imagePreview || null,
+          // category_ids: selectedCategories || []
         };
 
-        const response = await setBusiness(payload);
+        const response = await setBaseInfo(payload);
 
         if (response?.msg === 0) {
           if (isEditMode) {
@@ -449,16 +449,16 @@ export default function AddBusinessModal({
           about: baseInfo.about,
           lat: position ? position.lat : null,
           lng: position ? position.lng : null,
-          imgs: uploadedImgs,
-          links: contactData.links || [],
-          socials: contactData.socials || [],
-          phones: contactData.phones || [],
-          specs: specificationsData || [],
-          banner: bannerItem?.imagePreview || null,
-          category_ids: selectedCategories || []
+          // imgs: uploadedImgs,
+          // links: contactData.links || [],
+          // socials: contactData.socials || [],
+          // phones: contactData.phones || [],
+          // specs: specificationsData || [],
+          // banner: bannerItem?.imagePreview || null,
+          // category_ids: selectedCategories || []
         };
 
-        const response = await setBusiness(payload);
+        const response = await setBaseInfoApi(payload);
 
         if (response?.msg === 0) {
           await syncBusinessesAfterCreate();
@@ -517,7 +517,7 @@ export default function AddBusinessModal({
                 }));
               }}
             />
-            <Category
+            {/* <Category
               key={business?.id ?? "new"}
               setCategories={setSelectedCategories}
               initialCategoryIds={isEditMode ? getBusinessCategories(business) : []}
@@ -541,7 +541,7 @@ export default function AddBusinessModal({
               initialLinkItems={contactData.links}
               initialSocialMedia={contactData.socials}
               onContactChange={setContactData}
-            />
+            /> */}
           </div>
         </div>
 

@@ -7,7 +7,7 @@ import Specifications from "@/components/marketing/Specifications";
 import PhotoGallery from "@/components/marketing/PhotoGallery";
 import Category from "@/components/marketing/Category";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
-import { setBusiness } from "@/services/authService";
+import { setBaseInfoApi, setBusiness } from "@/services/authService";
 import { toast } from "react-toastify";
 
 // ۱. نگاشت فیلدهای اصلی بر اساس آبجکت سرور
@@ -295,6 +295,7 @@ const buildUpdatedBusiness = (previousBusiness, payload, response) => {
       payload.category_ids ||
       previousBusiness?.category_ids ||
       [],
+    status: fromResponse?.status ?? previousBusiness?.status ?? null,
   };
 };
 
@@ -412,9 +413,85 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     setGalleryItems(items);
   };
 
+  const businessStatus = business?.status;
+  const isBaseInfoOnly = businessStatus === 0;
+  const isFullEdit = businessStatus === 1 || businessStatus === 3;
+  const isEditBlocked = businessStatus === 2;
+
   const handleSubmit = async () => {
     if (!business) {
       toast.error("ابتدا یک کسب‌وکار انتخاب کنید.");
+      return;
+    }
+
+    if (isEditBlocked) {
+      toast.error("امکان ویرایش این کسب‌وکار وجود ندارد.");
+      return;
+    }
+
+    const nextErrors = {};
+    if (!baseInfo.businessTitle?.trim()) {
+      nextErrors.businessTitle = "عنوان کسب و کار الزامی است.";
+    }
+    if (!baseInfo.shortDescription?.trim()) {
+      nextErrors.shortDescription = "توضیح کوتاه الزامی است.";
+    }
+    if (!baseInfo.about?.trim()) {
+      nextErrors.about = "درباره کسب و کار الزامی است.";
+    }
+    if (!baseInfo.address?.trim()) {
+      nextErrors.address = "آدرس الزامی است.";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      toast.error(Object.values(nextErrors)[0]);
+      return;
+    }
+
+    const businessId = business?.id ?? 0;
+    const basePayload = {
+      businessId,
+      ownerId: business?.owner_id,
+      businessTitle: baseInfo.businessTitle,
+      englishName: baseInfo.englishName,
+      shortDescription: baseInfo.shortDescription,
+      address: baseInfo.address,
+      city: baseInfo.city,
+      about: baseInfo.about,
+      lat: position ? position.lat : null,
+      lng: position ? position.lng : null,
+    };
+
+    // status === 0 → فقط اطلاعات پایه با setBaseInfo
+    if (isBaseInfoOnly) {
+      setIsSaving(true);
+      try {
+        const response = await setBaseInfoApi(basePayload);
+
+        if (response?.msg === 0) {
+          const updatedBusiness = buildUpdatedBusiness(
+            business,
+            basePayload,
+            response,
+          );
+          persistEditedBusiness(updatedBusiness, userInfo, setActiveBusiness);
+          toast.success(response.msg_txt || "تغییرات با موفقیت ذخیره شد.");
+        } else {
+          toast.error(response?.msg_txt || "ثبت تغییرات ناموفق بود.");
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("خطا در ذخیره تغییرات");
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
+    // status === 1 یا 3 → فرم کامل با setBusiness
+    if (!isFullEdit) {
+      toast.error("وضعیت این کسب‌وکار برای ویرایش پشتیبانی نمی‌شود.");
       return;
     }
 
@@ -455,22 +532,10 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
       return;
     }
 
-    const businessId = business?.id ?? 0;
-
     const payload = {
-      businessId,
-      ownerId: business?.owner_id,
-      businessTitle: baseInfo.businessTitle,
-      englishName: baseInfo.englishName,
-      shortDescription: baseInfo.shortDescription,
-      address: baseInfo.address,
-      city: baseInfo.city,
-      about: baseInfo.about,
-      lat: position ? position.lat : null, // ارسال lat
-      lng: position ? position.lng : null, // ارسال lng
+      ...basePayload,
       imgs: uploadedImgs,
       links: contactData.links || [],
-      // تبدیل آبجکت سوشال کلاینت به آرایه مورد انتظار سرور شما
       socials: Object.entries(contactData.socials || {}).map(([key, val]) => ({
         id: key,
         value: val,
@@ -504,6 +569,19 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     }
   };
 
+  if (isEditBlocked) {
+    return (
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-8 text-center shadow-sm">
+        <p className="text-base font-bold text-amber-800 md:text-lg">
+          امکان ویرایش این کسب‌وکار وجود ندارد
+        </p>
+        <p className="mt-2 text-sm text-amber-700/80">
+          وضعیت فعلی کسب‌وکار اجازه ویرایش اطلاعات را نمی‌دهد.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       <BaseInfo
@@ -511,31 +589,36 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
         position={position}
         setPosition={setPosition}
         onInfoChange={handleInfoChange}
-      />
-      <PhotoGallery
-        galleryItems={galleryItems}
-        onGalleryChange={handleGalleryChange}
-        bannerItem={bannerItem}
-        onBannerChange={setBannerItem}
-        error={errors.gallery}
-      />
-      <Category
-        key={business?.id ?? "new"}
-        setCategories={setSelectedCategories}
-        initialCategoryIds={getBusinessCategories(business)}
-      />
-      <Specifications
-        initialSections={specificationsData}
-        onSpecificationsChange={setSpecificationsData}
-      />
-      <ContactInfo
-        initialPhoneItems={contactData.phones}
-        initialLinkItems={contactData.links}
-        initialSocialMedia={contactData.socials}
-        onContactChange={setContactData}
+        errors={errors}
       />
 
-      {/* فضای خالی تا آخرین فیلدها زیر دکمه ثابت نمانند */}
+      {isFullEdit ? (
+        <>
+          <PhotoGallery
+            galleryItems={galleryItems}
+            onGalleryChange={handleGalleryChange}
+            bannerItem={bannerItem}
+            onBannerChange={setBannerItem}
+            error={errors.gallery}
+          />
+          <Category
+            key={business?.id ?? "new"}
+            setCategories={setSelectedCategories}
+            initialCategoryIds={getBusinessCategories(business)}
+          />
+          <Specifications
+            initialSections={specificationsData}
+            onSpecificationsChange={setSpecificationsData}
+          />
+          <ContactInfo
+            initialPhoneItems={contactData.phones}
+            initialLinkItems={contactData.links}
+            initialSocialMedia={contactData.socials}
+            onContactChange={setContactData}
+          />
+        </>
+      ) : null}
+
       <div className="h-20" aria-hidden />
 
       <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center px-4 md:left-4 xl:left-30 sm:bottom-10 sm:justify-end sm:px-6 lg:px-8">

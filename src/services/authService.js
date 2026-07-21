@@ -113,11 +113,11 @@ export const setBusiness = async (payload = {}) => {
 
   return response.data;
 };
-export const setBaseInfo = async (payload = {}) => {
+export const setBaseInfoApi = async (payload = {}) => {
   const {
     businessId = 0,
-    businessTitle,
     ownerId,
+    businessTitle,
     shortDescription,
     englishName,
     address,
