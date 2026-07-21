@@ -6,6 +6,7 @@ import ContactInfo from "@/components/marketing/ContactInfo";
 import Specifications from "@/components/marketing/Specifications";
 import PhotoGallery from "@/components/marketing/PhotoGallery";
 import Category from "@/components/marketing/Category";
+import SectionTabs from "@/components/ui/SectionTabs";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
 import { setBaseInfoApi, setBusiness } from "@/services/authService";
 import { toast } from "react-toastify";
@@ -369,6 +370,7 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
 
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("base");
 
   // سینک کردن آنی فیلدها بدون نیاز به رفرش پس از دریافت پاسخ جدید سرور
   // همگام‌سازی فیلدها هنگام تعویض کسب‌وکار یا ثبت نهایی
@@ -445,6 +447,7 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
+      setActiveTab("base");
       toast.error(Object.values(nextErrors)[0]);
       return;
     }
@@ -514,6 +517,7 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     if (!hasSelectedImage) {
       const galleryError = "حداقل یک عکس باید انتخاب شود.";
       setErrors((prev) => ({ ...prev, gallery: galleryError }));
+      setActiveTab("gallery");
       toast.error(galleryError);
       return;
     }
@@ -521,6 +525,7 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     if (pendingUpload) {
       const galleryError = "لطفا صبر کنید تا آپلود عکس‌ها کامل شود.";
       setErrors((prev) => ({ ...prev, gallery: galleryError }));
+      setActiveTab("gallery");
       toast.error(galleryError);
       return;
     }
@@ -528,6 +533,7 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     if (hasSelectedImage && uploadedImgs.length === 0) {
       const galleryError = "حداقل یک عکس آپلود شده باید وجود داشته باشد.";
       setErrors((prev) => ({ ...prev, gallery: galleryError }));
+      setActiveTab("gallery");
       toast.error(galleryError);
       return;
     }
@@ -582,40 +588,66 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     );
   }
 
+  const editorTabs = [
+    { id: "base", label: "اطلاعات پایه" },
+    { id: "gallery", label: "گالری تصاویر" },
+    { id: "category", label: "دسته‌بندی" },
+    { id: "specs", label: "مشخصات" },
+    { id: "contact", label: "راه‌های ارتباطی" },
+  ];
+
   return (
     <>
-      <BaseInfo
-        {...baseInfo}
-        position={position}
-        setPosition={setPosition}
-        onInfoChange={handleInfoChange}
-        errors={errors}
-      />
+      {isFullEdit && (
+        <SectionTabs
+          tabs={editorTabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      )}
+
+      <div className={isFullEdit && activeTab !== "base" ? "hidden" : ""}>
+        <BaseInfo
+          {...baseInfo}
+          position={position}
+          setPosition={setPosition}
+          onInfoChange={handleInfoChange}
+          errors={errors}
+        />
+      </div>
 
       {isFullEdit ? (
         <>
-          <PhotoGallery
-            galleryItems={galleryItems}
-            onGalleryChange={handleGalleryChange}
-            bannerItem={bannerItem}
-            onBannerChange={setBannerItem}
-            error={errors.gallery}
-          />
-          <Category
-            key={business?.id ?? "new"}
-            setCategories={setSelectedCategories}
-            initialCategoryIds={getBusinessCategories(business)}
-          />
-          <Specifications
-            initialSections={specificationsData}
-            onSpecificationsChange={setSpecificationsData}
-          />
-          <ContactInfo
-            initialPhoneItems={contactData.phones}
-            initialLinkItems={contactData.links}
-            initialSocialMedia={contactData.socials}
-            onContactChange={setContactData}
-          />
+          <div className={activeTab !== "gallery" ? "hidden" : ""}>
+            <PhotoGallery
+              galleryItems={galleryItems}
+              onGalleryChange={handleGalleryChange}
+              bannerItem={bannerItem}
+              onBannerChange={setBannerItem}
+              error={errors.gallery}
+            />
+          </div>
+          <div className={activeTab !== "category" ? "hidden" : ""}>
+            <Category
+              key={business?.id ?? "new"}
+              setCategories={setSelectedCategories}
+              initialCategoryIds={getBusinessCategories(business)}
+            />
+          </div>
+          <div className={activeTab !== "specs" ? "hidden" : ""}>
+            <Specifications
+              initialSections={specificationsData}
+              onSpecificationsChange={setSpecificationsData}
+            />
+          </div>
+          <div className={activeTab !== "contact" ? "hidden" : ""}>
+            <ContactInfo
+              initialPhoneItems={contactData.phones}
+              initialLinkItems={contactData.links}
+              initialSocialMedia={contactData.socials}
+              onContactChange={setContactData}
+            />
+          </div>
         </>
       ) : null}
 

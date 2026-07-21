@@ -177,7 +177,7 @@ export default function Specifications({ initialSections, onSpecificationsChange
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-2">
               <div className="space-y-1">
                 <label className="text-md font-medium text-gray-700">
                   عنوان بخش
@@ -195,13 +195,10 @@ export default function Specifications({ initialSections, onSpecificationsChange
 
               <div className="space-y-4">
                 {section.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-gray-200 bg-indigo-50 p-4"
-                  >
-                    <div className="mb-4 flex items-center justify-between gap-3">
+                  <>
+                    <div key={item.id} className="mb-4 flex items-center justify-between gap-3">
                       <span className="text-sm font-medium text-gray-600">
-                        مشخصه {item.id}
+                        {/* مشخصه {item.id} */}
                       </span>
                       <button
                         type="button"
@@ -214,9 +211,9 @@ export default function Specifications({ initialSections, onSpecificationsChange
 
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                       <div className="space-y-1">
-                        <label className="text-md font-medium text-gray-700">
+                        {/* <label className="text-md font-medium text-gray-700">
                           عنوان
-                        </label>
+                        </label> */}
                         <input
                           className="mt-2 h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                           type="text"
@@ -232,9 +229,9 @@ export default function Specifications({ initialSections, onSpecificationsChange
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-md font-medium text-gray-700">
+                        {/* <label className="text-md font-medium text-gray-700">
                           مقدار
-                        </label>
+                        </label> */}
                         <input
                           className="mt-2 h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                           type="text"
@@ -250,7 +247,7 @@ export default function Specifications({ initialSections, onSpecificationsChange
                         />
                       </div>
                     </div>
-                  </div>
+                  </>
                 ))}
               </div>
 
