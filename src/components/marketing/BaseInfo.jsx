@@ -24,6 +24,7 @@ export default function BaseInfo({
 }) {
   const [cities, setCities] = useState([]);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
+  const [mapCenter, setMapCenter] = useState(null);
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -265,7 +266,15 @@ export default function BaseInfo({
             options={cityOptions}
             instanceId="business-city-select"
             value={currentCityOption}
-            onChange={(option) => safeChange({ city: option ? option.value : "" })}
+            onChange={(option) => {
+              safeChange({ city: option ? option.value : "" });
+              if (option) {
+                const selectedCity = cities.find((c) => c.name === option.value);
+                if (selectedCity?.latitude && selectedCity?.longitude) {
+                  setMapCenter([Number(selectedCity.latitude), Number(selectedCity.longitude)]);
+                }
+              }
+            }}
             isLoading={isLoadingCities}
             placeholder="شهر را انتخاب کنید"
             loadingMessage={() => "در حال بارگذاری شهرها..."}
@@ -287,7 +296,7 @@ export default function BaseInfo({
 
 
 
-          <LocationPicker position={position} setPosition={setPosition} />
+          <LocationPicker position={position} setPosition={setPosition} center={mapCenter} />
         </div>
       </div>
     </div>

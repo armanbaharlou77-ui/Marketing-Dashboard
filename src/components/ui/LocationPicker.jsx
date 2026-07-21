@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -29,7 +29,24 @@ function LocationMarker({ position, setPosition }) {
     return <Marker position={[position.lat, position.lng]} />;
 }
 
-export default function LocationPicker({ position, setPosition }) {
+function FlyToCenter({ center }) {
+    const map = useMap();
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        if (center) {
+            map.flyTo(center, map.getZoom(), { duration: 1.2 });
+        }
+    }, [center, map]);
+
+    return null;
+}
+
+export default function LocationPicker({ position, setPosition, center }) {
     const defaultCenter = position?.lat && position?.lng
         ? [position.lat, position.lng]
         : [32.6546, 51.6680];
@@ -49,6 +66,7 @@ export default function LocationPicker({ position, setPosition }) {
                     />
 
                     <LocationMarker position={position} setPosition={setPosition} />
+                    {center && <FlyToCenter center={center} />}
                 </MapContainer>
             </div>
         </div>
