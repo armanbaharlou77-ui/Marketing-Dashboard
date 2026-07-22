@@ -26,13 +26,16 @@ const normalizeSpecificationSections = (sections) => {
     items:
       Array.isArray(section?.items) && section.items.length > 0
         ? section.items.map((item, itemIndex) => ({
-          id: item?.id ?? itemIndex + 1,
-          title: item?.title ?? item?.name ?? "",
-          value: item?.value ?? item?.description ?? "",
-        }))
+            id: item?.id ?? itemIndex + 1,
+            title: item?.title ?? item?.name ?? "",
+            value: item?.value ?? item?.description ?? "",
+          }))
         : [createSpecificationItem(1)],
   }));
 };
+
+const inputClass =
+  "h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 
 export default function Specifications({
   initialSections,
@@ -53,28 +56,16 @@ export default function Specifications({
     );
   };
 
-  const specifications = sections.map((section) => ({
-    title: section.sectionTitle,
-    items: section.items.map((item) => ({
-      title: item.title,
-      value: item.value,
-    })),
-  }));
-
-  const handleClick = () => {
-    console.log(specifications);
-  };
-
   const handleItemChange = (sectionId, itemId, field, value) => {
     setSections((prev) =>
       prev.map((section) =>
         section.id === sectionId
           ? {
-            ...section,
-            items: section.items.map((item) =>
-              item.id === itemId ? { ...item, [field]: value } : item
-            ),
-          }
+              ...section,
+              items: section.items.map((item) =>
+                item.id === itemId ? { ...item, [field]: value } : item
+              ),
+            }
           : section
       )
     );
@@ -104,12 +95,12 @@ export default function Specifications({
       prev.map((section) =>
         section.id === sectionId
           ? {
-            ...section,
-            items: [
-              ...section.items,
-              createSpecificationItem(section.items.length + 1),
-            ],
-          }
+              ...section,
+              items: [
+                ...section.items,
+                createSpecificationItem(section.items.length + 1),
+              ],
+            }
           : section
       )
     );
@@ -154,40 +145,42 @@ export default function Specifications({
   }, [sections, onSpecificationsChange]);
 
   return (
-    <div className="h-fit w-full mt-8 rounded-xl border border-gray-300 bg-slate-100 p-4 shadow-lg md:p-6">
+    <div className="mt-8 h-fit w-full rounded-xl border border-gray-300 bg-slate-100 p-3 shadow-lg sm:p-4 md:p-6">
       <h1 className="w-fit border-b-2 border-blue-400 text-lg font-bold md:text-2xl">
         مشخصات
       </h1>
-      <p className="my-4 mb-10 text-md text-gray-500 md:text-xl">
-        دسته‌بندی های مشخصات را تعریف کنید و برای هر دسته، عنوان و مقدارهای مورد نظر را وارد کنید
+      <p className="my-3 mb-6 text-sm text-gray-500 md:my-4 md:mb-10 md:text-xl">
+        دسته‌بندی‌های مشخصات را تعریف کنید و برای هر دسته، عنوان و مقدارهای مورد
+        نظر را وارد کنید
       </p>
 
       {error ? (
         <p className="mb-4 text-sm font-medium text-red-600">{error}</p>
       ) : null}
 
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {sections.map((section) => (
           <section
             key={section.id}
-            className="rounded-2xl border border-gray-300 bg-white/70 p-4 shadow-sm"
+            className="rounded-2xl border border-gray-300 bg-white/70 p-3 shadow-sm sm:p-4"
           >
-            <div className="space-y-2">
+            <div className="space-y-3 md:space-y-2">
               <div className="space-y-1">
-                <div className="flex justify-between">
-                  <label className="text-lg font-medium text-gray-700">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-base font-medium text-gray-700 md:text-lg">
                     عنوان بخش
                   </label>
                   <button
                     type="button"
                     onClick={() => handleRemoveSection(section.id)}
-                    className="rounded-xl p-1 text-sm text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
+                    aria-label="حذف بخش"
+                    className="shrink-0 rounded-xl p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
                   >
-                    <Trash2Icon />
+                    <Trash2Icon className="h-5 w-5" />
                   </button>
                 </div>
                 <input
-                  className="mt-1 h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={inputClass}
                   type="text"
                   placeholder="مشخصات فنی"
                   value={section.sectionTitle}
@@ -197,10 +190,10 @@ export default function Specifications({
                 />
               </div>
 
-              <div className="mt-5 h-0.5 w-full bg-blue-300" />
+              <div className="mt-3 h-px w-full bg-blue-200 md:mt-5 md:h-0.5 md:bg-blue-300" />
 
               <div className="space-y-3">
-                <div className="mt-6 hidden grid-cols-2 gap-3 md:grid">
+                <div className="mt-4 hidden grid-cols-2 gap-3 md:mt-6 md:grid">
                   <span className="text-base font-medium text-gray-600">
                     عنوان مشخصه
                   </span>
@@ -212,14 +205,14 @@ export default function Specifications({
                 {section.items.map((item) => (
                   <div
                     key={item.id}
-                    className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-end"
+                    className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto] md:items-center md:gap-3"
                   >
                     <div className="min-w-0 space-y-1">
                       <label className="text-sm font-medium text-gray-600 md:hidden">
                         عنوان مشخصه
                       </label>
                       <input
-                        className="h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className={inputClass}
                         type="text"
                         value={item.title}
                         onChange={(event) =>
@@ -227,7 +220,7 @@ export default function Specifications({
                             section.id,
                             item.id,
                             "title",
-                            event.target.value,
+                            event.target.value
                           )
                         }
                       />
@@ -239,7 +232,7 @@ export default function Specifications({
                           مقدار
                         </label>
                         <input
-                          className="h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className={inputClass}
                           type="text"
                           value={item.value}
                           onChange={(event) =>
@@ -247,7 +240,7 @@ export default function Specifications({
                               section.id,
                               item.id,
                               "value",
-                              event.target.value,
+                              event.target.value
                             )
                           }
                         />
@@ -255,7 +248,8 @@ export default function Specifications({
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(section.id, item.id)}
-                        className="mb-0.5 shrink-0 rounded-xl p-2 text-sm text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
+                        aria-label="حذف مشخصه"
+                        className="mb-0.5 shrink-0 rounded-xl p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-600 md:mb-0"
                       >
                         <Trash2Icon className="h-5 w-5" />
                       </button>
@@ -267,10 +261,10 @@ export default function Specifications({
               <button
                 type="button"
                 onClick={() => handleAddItem(section.id)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-blue-300 py-3 text-blue-600 transition-colors hover:bg-blue-100"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-blue-300 px-3 py-3 text-sm text-blue-600 transition-colors hover:bg-blue-100 md:text-base"
               >
                 <span className="text-xl leading-none">+</span>
-                <span>افزودن عنوان و مقدار جدید</span>
+                <span>افزودن مشخصه جدید</span>
               </button>
             </div>
           </section>
@@ -280,7 +274,7 @@ export default function Specifications({
       <button
         type="button"
         onClick={handleAddSection}
-        className="my-6 mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-blue-300 py-3 text-blue-600 transition-colors hover:bg-blue-100"
+        className="my-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-blue-300 px-3 py-3 text-sm text-blue-600 transition-colors hover:bg-blue-100 md:my-6 md:text-base"
       >
         <span className="text-xl leading-none">+</span>
         <span>افزودن بخش مشخصات جدید</span>

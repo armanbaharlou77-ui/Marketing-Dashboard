@@ -55,7 +55,8 @@ const normalizeSocials = (items) => {
     items.forEach((item) => {
       const key = item?.id || item?.name || item?.platform;
       if (key && Object.prototype.hasOwnProperty.call(socials, key)) {
-        socials[key] = item?.value ?? item?.url ?? item?.link ?? item?.handle ?? "";
+        socials[key] =
+          item?.value ?? item?.url ?? item?.link ?? item?.handle ?? "";
       }
     });
     return socials;
@@ -74,6 +75,12 @@ const normalizeSocials = (items) => {
 
   return socials;
 };
+
+const inputClass =
+  "h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+
+const addButtonClass =
+  "my-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-blue-300 px-3 py-3 text-sm text-blue-600 transition-colors hover:bg-blue-100 md:my-6 md:text-base";
 
 export default function ContactInfo({
   initialPhoneItems,
@@ -138,24 +145,24 @@ export default function ContactInfo({
     {
       id: "telegram",
       label: "تلگرام",
-      icon: <BsTelegram className="h-6 w-6" color="#0088cc" />,
+      icon: <BsTelegram className="h-5 w-5 sm:h-6 sm:w-6" color="#0088cc" />,
     },
     {
       id: "whatsapp",
       label: "واتساپ",
-      icon: <BsWhatsapp className="h-6 w-6" color="#25D366" />,
+      icon: <BsWhatsapp className="h-5 w-5 sm:h-6 sm:w-6" color="#25D366" />,
     },
     {
       id: "instagram",
       label: "اینستاگرام",
-      icon: <BsInstagram className="h-6 w-6" color="#E1306C" />,
+      icon: <BsInstagram className="h-5 w-5 sm:h-6 sm:w-6" color="#E1306C" />,
     },
     {
       id: "eitaa",
       label: "ایتا",
       icon: (
         <img
-          className="h-6 w-6"
+          className="h-5 w-5 sm:h-6 sm:w-6"
           src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxy5f8Ql9-UCh3yLRJKRx3MNOULqcorae4LA&s"
           alt="ایتا"
         />
@@ -166,7 +173,7 @@ export default function ContactInfo({
       label: "بله",
       icon: (
         <img
-          className="h-6 w-6"
+          className="h-5 w-5 sm:h-6 sm:w-6"
           src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRehIY4zFEGTMvAc2McYlvBVfVb6HJQnRqrGA&s"
           alt="بله"
         />
@@ -198,22 +205,19 @@ export default function ContactInfo({
   }, [phoneItems, linkItems, socialMedia, onContactChange]);
 
   return (
-    <div className="mt-8 h-fit w-full rounded-xl border border-gray-300 bg-slate-100 md:p-6 p-4 shadow-lg">
+    <div className="mt-8 h-fit w-full rounded-xl border border-gray-300 bg-slate-100 p-3 shadow-lg sm:p-4 md:p-6">
       <h1 className="w-fit border-b-2 border-blue-400 text-lg font-bold md:text-2xl">
         اطلاعات تماس
       </h1>
-      <p className="my-4 mb-10 text-md text-gray-500 md:text-xl">
-        شماره تماس، لینک ها و شبکه های اجتماعی کسب و کار را وارد کنید
+      <p className="my-3 mb-6 text-sm text-gray-500 md:my-4 md:mb-10 md:text-xl">
+        شماره تماس، لینک‌ها و شبکه‌های اجتماعی کسب‌وکار را وارد کنید
       </p>
 
-      <div className="space-y-8">
+      <div className="space-y-6 md:space-y-8">
+        <section className="space-y-3 md:space-y-4">
+          <h2 className="text-base font-semibold md:text-xl">شماره‌ها</h2>
 
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold md:text-xl">شماره ها</h2>
-          </div>
-
-          <div className="space-y-4 rounded-2xl border border-gray-300 bg-white/70 p-4 shadow-sm">
+          <div className="space-y-3 rounded-2xl border border-gray-300 bg-white/70 p-3 shadow-sm sm:p-4">
             <div className="hidden grid-cols-2 gap-3 md:grid">
               <span className="text-base font-medium text-gray-600">عنوان</span>
               <span className="text-base font-medium text-gray-600">
@@ -225,14 +229,14 @@ export default function ContactInfo({
               {phoneItems.map((item) => (
                 <div
                   key={item.id}
-                  className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-end"
+                  className="grid grid-cols-1 gap-2 md:grid-cols-2 md:items-end md:gap-3"
                 >
                   <div className="min-w-0 space-y-1">
                     <label className="text-sm font-medium text-gray-600 md:hidden">
                       عنوان
                     </label>
                     <input
-                      className="h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={inputClass}
                       type="text"
                       value={item.title}
                       onChange={(event) =>
@@ -247,15 +251,16 @@ export default function ContactInfo({
                         شماره تماس
                       </label>
                       <input
-                        className="h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        type="text"
-                        style={{ direction: "ltr" }}
+                        className={inputClass}
+                        type="tel"
+                        inputMode="tel"
+                        dir="ltr"
                         value={item.number}
                         onChange={(event) =>
                           handlePhoneChange(
                             item.id,
                             "number",
-                            event.target.value,
+                            event.target.value
                           )
                         }
                       />
@@ -263,7 +268,8 @@ export default function ContactInfo({
                     <button
                       type="button"
                       onClick={() => handleRemovePhone(item.id)}
-                      className="mb-0.5 shrink-0 rounded-xl p-2 text-sm text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
+                      aria-label="حذف شماره"
+                      className="mb-0.5 shrink-0 rounded-xl p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
                     >
                       <Trash2Icon className="h-5 w-5" />
                     </button>
@@ -276,21 +282,19 @@ export default function ContactInfo({
           <button
             type="button"
             onClick={handleAddPhone}
-            className="my-6 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-blue-300 py-3 text-blue-600 transition-colors hover:bg-blue-100"
+            className={addButtonClass}
           >
             <span className="text-xl leading-none">+</span>
             <span>افزودن شماره جدید</span>
           </button>
         </section>
 
-        <div className="my-12 h-0.5 w-full bg-black/50" />
+        <div className="h-px w-full bg-gray-300 md:my-4 md:h-0.5 md:bg-black/50" />
 
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold md:text-xl">لینک ها</h2>
-          </div>
+        <section className="space-y-3 md:space-y-4">
+          <h2 className="text-base font-semibold md:text-xl">لینک‌ها</h2>
 
-          <div className="space-y-4 rounded-2xl border border-gray-300 bg-white/70 p-4 shadow-sm">
+          <div className="space-y-3 rounded-2xl border border-gray-300 bg-white/70 p-3 shadow-sm sm:p-4">
             <div className="hidden grid-cols-2 gap-3 md:grid">
               <span className="text-base font-medium text-gray-600">عنوان</span>
               <span className="text-base font-medium text-gray-600">
@@ -302,14 +306,14 @@ export default function ContactInfo({
               {linkItems.map((item) => (
                 <div
                   key={item.id}
-                  className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-end"
+                  className="grid grid-cols-1 gap-2 md:grid-cols-2 md:items-end md:gap-3"
                 >
                   <div className="min-w-0 space-y-1">
                     <label className="text-sm font-medium text-gray-600 md:hidden">
                       عنوان
                     </label>
                     <input
-                      className="h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={inputClass}
                       type="text"
                       value={item.title}
                       onChange={(event) =>
@@ -324,9 +328,10 @@ export default function ContactInfo({
                         آدرس لینک
                       </label>
                       <input
-                        className="h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        type="text"
-                        style={{ direction: "ltr" }}
+                        className={inputClass}
+                        type="url"
+                        inputMode="url"
+                        dir="ltr"
                         value={item.url}
                         onChange={(event) =>
                           handleLinkChange(item.id, "url", event.target.value)
@@ -336,7 +341,8 @@ export default function ContactInfo({
                     <button
                       type="button"
                       onClick={() => handleRemoveLink(item.id)}
-                      className="mb-0.5 shrink-0 rounded-xl p-2 text-sm text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
+                      aria-label="حذف لینک"
+                      className="mb-0.5 shrink-0 rounded-xl p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
                     >
                       <Trash2Icon className="h-5 w-5" />
                     </button>
@@ -349,45 +355,42 @@ export default function ContactInfo({
           <button
             type="button"
             onClick={handleAddLink}
-            className="my-6 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-blue-300 py-3 text-blue-600 transition-colors hover:bg-blue-100"
+            className={addButtonClass}
           >
             <span className="text-xl leading-none">+</span>
             <span>افزودن لینک جدید</span>
           </button>
         </section>
 
-        <div className="my-12 h-0.5 w-full bg-black/50" />
+        <div className="h-px w-full bg-gray-300 md:my-4 md:h-0.5 md:bg-black/50" />
 
-        <section className="space-y-6">
-          <h2 className="text-lg font-semibold md:text-xl">
-            شبکه های اجتماعی
+        <section className="space-y-4 md:space-y-6">
+          <h2 className="text-base font-semibold md:text-xl">
+            شبکه‌های اجتماعی
           </h2>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
             {socialNetworks.map((network) => (
               <div key={network.id} className="relative mt-2 w-full">
-
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex w-12 items-center justify-center">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex w-11 items-center justify-center sm:w-12">
                   {network.icon}
                 </div>
 
-
                 <input
                   id={network.id}
-                  className="h-14 w-full rounded-xl border border-gray-300 bg-white pl-4 pr-12 pt-1 text-left shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-3 pr-11 text-left shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:h-14 sm:pl-4 sm:pr-12"
                   type="text"
-                  style={{ direction: "ltr" }}
-                  placeholder={`@example`}
+                  dir="ltr"
+                  placeholder="@example"
                   value={socialMedia[network.id]}
                   onChange={(event) =>
                     handleSocialChange(network.id, event.target.value)
                   }
                 />
 
-
                 <label
                   htmlFor={network.id}
-                  className="absolute -top-3 right-4 bg-white px-2 text-sm font-medium text-gray-600"
+                  className="absolute -top-2.5 right-3 bg-slate-100 px-1.5 text-xs font-medium text-gray-600 sm:right-4 sm:px-2 sm:text-sm"
                 >
                   {network.label}
                 </label>

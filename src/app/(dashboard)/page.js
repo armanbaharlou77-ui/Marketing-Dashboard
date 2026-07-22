@@ -21,6 +21,11 @@ export default function DashboardPage() {
       badge: "bg-red-100 text-red-700 border-red-200",
       card: "border-red-300 bg-red-50",
     },
+    3: {
+      text: "تایید اولیه",
+      badge: "bg-blue-100 text-blue-700 border-blue-200",
+      card: "border-blue-300 bg-blue-50",
+    },
   };
 
   const getStatus = (statusCode) => {

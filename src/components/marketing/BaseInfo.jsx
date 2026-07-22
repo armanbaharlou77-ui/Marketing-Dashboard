@@ -291,12 +291,18 @@ export default function BaseInfo({
           )}
 
           <label className="mb-3 mt-4 block text-sm font-medium">
-            انتخاب مکان روی نقشه
+            انتخاب لوکیشن روی نقشه
           </label>
 
-
-
-          <LocationPicker position={position} setPosition={setPosition} center={mapCenter} />
+          <div
+            id="locationPickerSection"
+            className={errors.position ? "rounded-2xl ring-1 ring-red-400" : ""}
+          >
+            <LocationPicker position={position} setPosition={setPosition} center={mapCenter} />
+          </div>
+          {errors.position && (
+            <p className="mt-1 text-sm text-red-600">{errors.position}</p>
+          )}
         </div>
       </div>
     </div>
