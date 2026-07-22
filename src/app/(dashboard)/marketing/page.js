@@ -431,6 +431,12 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
       return;
     }
 
+    const failValidation = (nextErrors, tab) => {
+      setErrors(nextErrors);
+      if (tab) setActiveTab(tab);
+      toast.error(Object.values(nextErrors)[0]);
+    };
+
     const nextErrors = {};
     if (!baseInfo.businessTitle?.trim()) {
       nextErrors.businessTitle = "عنوان کسب و کار الزامی است.";
@@ -444,11 +450,12 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     if (!baseInfo.address?.trim()) {
       nextErrors.address = "آدرس الزامی است.";
     }
+    if (!baseInfo.city?.trim()) {
+      nextErrors.city = "انتخاب شهر الزامی است.";
+    }
 
     if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
-      setActiveTab("base");
-      toast.error(Object.values(nextErrors)[0]);
+      failValidation(nextErrors, "base");
       return;
     }
 
@@ -514,28 +521,81 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
         alt: item.alt || "",
       }));
 
+    const hasBanner = Boolean(
+      bannerItem?.uploadedUrl || bannerItem?.imagePreview,
+    );
+    const bannerPending = Boolean(
+      bannerItem?.image && !bannerItem?.uploadedUrl && bannerItem?.uploading,
+    );
+
     if (!hasSelectedImage) {
-      const galleryError = "حداقل یک عکس باید انتخاب شود.";
-      setErrors((prev) => ({ ...prev, gallery: galleryError }));
-      setActiveTab("gallery");
-      toast.error(galleryError);
+      failValidation(
+        { gallery: "حداقل یک عکس باید انتخاب شود." },
+        "gallery",
+      );
       return;
     }
 
     if (pendingUpload) {
-      const galleryError = "لطفا صبر کنید تا آپلود عکس‌ها کامل شود.";
-      setErrors((prev) => ({ ...prev, gallery: galleryError }));
-      setActiveTab("gallery");
-      toast.error(galleryError);
+      failValidation(
+        { gallery: "لطفا صبر کنید تا آپلود عکس‌ها کامل شود." },
+        "gallery",
+      );
       return;
     }
 
     if (hasSelectedImage && uploadedImgs.length === 0) {
-      const galleryError = "حداقل یک عکس آپلود شده باید وجود داشته باشد.";
-      setErrors((prev) => ({ ...prev, gallery: galleryError }));
-      setActiveTab("gallery");
-      toast.error(galleryError);
+      failValidation(
+        { gallery: "حداقل یک عکس آپلود شده باید وجود داشته باشد." },
+        "gallery",
+      );
       return;
+    }
+
+    if (!hasBanner) {
+      failValidation({ banner: "انتخاب بنر الزامی است." }, "gallery");
+      return;
+    }
+
+    if (bannerPending) {
+      failValidation(
+        { banner: "لطفا صبر کنید تا آپلود بنر کامل شود." },
+        "gallery",
+      );
+      return;
+    }
+
+    const selectedCategoryIds = (selectedCategories || []).filter(
+      (id) => id != null && id !== "",
+    );
+    if (selectedCategoryIds.length === 0) {
+      failValidation(
+        { category: "حداقل یک دسته‌بندی باید انتخاب شود." },
+        "category",
+      );
+      return;
+    }
+
+    const specs = Array.isArray(specificationsData) ? specificationsData : [];
+    for (const section of specs) {
+      if (!section?.sectionTitle?.trim()) {
+        failValidation(
+          { specs: "عنوان هر بخش مشخصات الزامی است." },
+          "specs",
+        );
+        return;
+      }
+
+      const items = Array.isArray(section?.items) ? section.items : [];
+      for (const item of items) {
+        if (!item?.title?.trim()) {
+          failValidation(
+            { specs: "عنوان هر مشخصه الزامی است." },
+            "specs",
+          );
+          return;
+        }
+      }
     }
 
     const payload = {
@@ -549,7 +609,7 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
       phones: contactData.phones || [],
       specs: specificationsData || [],
       banner: bannerItem?.uploadedUrl || bannerItem?.imagePreview || null,
-      category_ids: selectedCategories || [],
+      category_ids: selectedCategoryIds,
     };
 
     setIsSaving(true);
@@ -625,6 +685,7 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
               bannerItem={bannerItem}
               onBannerChange={setBannerItem}
               error={errors.gallery}
+              bannerError={errors.banner}
             />
           </div>
           <div className={activeTab !== "category" ? "hidden" : ""}>
@@ -632,12 +693,14 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
               key={business?.id ?? "new"}
               setCategories={setSelectedCategories}
               initialCategoryIds={getBusinessCategories(business)}
+              validationError={errors.category}
             />
           </div>
           <div className={activeTab !== "specs" ? "hidden" : ""}>
             <Specifications
               initialSections={specificationsData}
               onSpecificationsChange={setSpecificationsData}
+              error={errors.specs}
             />
           </div>
           <div className={activeTab !== "contact" ? "hidden" : ""}>

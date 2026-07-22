@@ -70,7 +70,7 @@ const extractUploadUrl = (payload) => {
   return walk(payload);
 };
 
-export default function PhotoGallery({ galleryItems = [], onGalleryChange, bannerItem = null, onBannerChange, error }) {
+export default function PhotoGallery({ galleryItems = [], onGalleryChange, bannerItem = null, onBannerChange, error, bannerError }) {
   console.log(bannerItem)
   const updateItems = (nextItems) => {
     if (typeof onGalleryChange === "function") onGalleryChange(nextItems);
@@ -288,6 +288,7 @@ export default function PhotoGallery({ galleryItems = [], onGalleryChange, banne
 
           {bannerItem?.uploading && <p className="text-sm text-blue-600 animate-pulse">در حال آپلود بنر...</p>}
           {bannerItem?.uploadError && <p className="text-sm text-red-600">{bannerItem.uploadError}</p>}
+          {bannerError ? <p className="text-sm text-red-600">{bannerError}</p> : null}
 
           {bannerItem && (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

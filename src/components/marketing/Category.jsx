@@ -5,7 +5,11 @@ import Select from "react-select";
 import { getCategoryGraph } from "@/services/authService";
 import { Trash2 } from "lucide-react";
 
-export default function Category({ setCategories, initialCategoryIds = [] }) {
+export default function Category({
+  setCategories,
+  initialCategoryIds = [],
+  validationError,
+}) {
     const [categoryTree, setCategoryTree] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -258,6 +262,12 @@ export default function Category({ setCategories, initialCategoryIds = [] }) {
                     دسته‌بندی کسب و کار خود را انتخاب کنید
                 </p>
             </div>
+
+            {validationError ? (
+                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4">
+                    <p className="text-sm text-red-600">{validationError}</p>
+                </div>
+            ) : null}
 
             {isLoading && (
                 <div className="flex items-center justify-center py-8">

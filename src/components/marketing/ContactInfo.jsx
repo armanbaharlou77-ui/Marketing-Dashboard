@@ -213,32 +213,26 @@ export default function ContactInfo({
             <h2 className="text-lg font-semibold md:text-xl">شماره ها</h2>
           </div>
 
-          <div className="space-y-4">
-            {phoneItems.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-2xl border border-gray-300 bg-white/70 p-4 shadow-sm"
-              >
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">
-                    شماره {item.id}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemovePhone(item.id)}
-                    className="rounded-xl p-1 text-sm text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
-                  >
-                    <Trash2Icon />
-                  </button>
-                </div>
+          <div className="space-y-4 rounded-2xl border border-gray-300 bg-white/70 p-4 shadow-sm">
+            <div className="hidden grid-cols-2 gap-3 md:grid">
+              <span className="text-base font-medium text-gray-600">عنوان</span>
+              <span className="text-base font-medium text-gray-600">
+                شماره تماس
+              </span>
+            </div>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <div className="space-y-1">
-                    <label className="text-md font-medium text-gray-700">
+            <div className="space-y-3">
+              {phoneItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-end"
+                >
+                  <div className="min-w-0 space-y-1">
+                    <label className="text-sm font-medium text-gray-600 md:hidden">
                       عنوان
                     </label>
                     <input
-                      className="mt-2 h-12 w-full rounded-xl border border-gray-300 p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       type="text"
                       value={item.title}
                       onChange={(event) =>
@@ -246,23 +240,37 @@ export default function ContactInfo({
                       }
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-md font-medium text-gray-700">
-                      شماره تماس
-                    </label>
-                    <input
-                      className="mt-2 h-12 w-full rounded-xl border border-gray-300 p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      type="text"
-                      style={{ direction: "ltr" }}
-                      value={item.number}
-                      onChange={(event) =>
-                        handlePhoneChange(item.id, "number", event.target.value)
-                      }
-                    />
+
+                  <div className="flex min-w-0 items-end gap-2">
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <label className="text-sm font-medium text-gray-600 md:hidden">
+                        شماره تماس
+                      </label>
+                      <input
+                        className="h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        type="text"
+                        style={{ direction: "ltr" }}
+                        value={item.number}
+                        onChange={(event) =>
+                          handlePhoneChange(
+                            item.id,
+                            "number",
+                            event.target.value,
+                          )
+                        }
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhone(item.id)}
+                      className="mb-0.5 shrink-0 rounded-xl p-2 text-sm text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
+                    >
+                      <Trash2Icon className="h-5 w-5" />
+                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           <button
@@ -277,38 +285,31 @@ export default function ContactInfo({
 
         <div className="my-12 h-0.5 w-full bg-black/50" />
 
-
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold md:text-xl">لینک ها</h2>
           </div>
 
-          <div className="space-y-4">
-            {linkItems.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-2xl border border-gray-300 bg-white/70 p-4 shadow-sm"
-              >
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">
-                    لینک {item.id}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveLink(item.id)}
-                    className="rounded-xl p-1 text-sm text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
-                  >
-                    <Trash2Icon />
-                  </button>
-                </div>
+          <div className="space-y-4 rounded-2xl border border-gray-300 bg-white/70 p-4 shadow-sm">
+            <div className="hidden grid-cols-2 gap-3 md:grid">
+              <span className="text-base font-medium text-gray-600">عنوان</span>
+              <span className="text-base font-medium text-gray-600">
+                آدرس لینک
+              </span>
+            </div>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <div className="space-y-1">
-                    <label className="text-md font-medium text-gray-700">
+            <div className="space-y-3">
+              {linkItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-end"
+                >
+                  <div className="min-w-0 space-y-1">
+                    <label className="text-sm font-medium text-gray-600 md:hidden">
                       عنوان
                     </label>
                     <input
-                      className="mt-2 h-12 w-full rounded-xl border border-gray-300 p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       type="text"
                       value={item.title}
                       onChange={(event) =>
@@ -316,23 +317,33 @@ export default function ContactInfo({
                       }
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-md font-medium text-gray-700">
-                      آدرس لینک
-                    </label>
-                    <input
-                      className="mt-2 h-12 w-full rounded-xl border border-gray-300 p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      type="text"
-                      style={{ direction: "ltr" }}
-                      value={item.url}
-                      onChange={(event) =>
-                        handleLinkChange(item.id, "url", event.target.value)
-                      }
-                    />
+
+                  <div className="flex min-w-0 items-end gap-2">
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <label className="text-sm font-medium text-gray-600 md:hidden">
+                        آدرس لینک
+                      </label>
+                      <input
+                        className="h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        type="text"
+                        style={{ direction: "ltr" }}
+                        value={item.url}
+                        onChange={(event) =>
+                          handleLinkChange(item.id, "url", event.target.value)
+                        }
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveLink(item.id)}
+                      className="mb-0.5 shrink-0 rounded-xl p-2 text-sm text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
+                    >
+                      <Trash2Icon className="h-5 w-5" />
+                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           <button
