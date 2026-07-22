@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import BaseInfo from "@/components/marketing/BaseInfo";
-import { getBusiness, setBusiness, setBaseInfoApi } from "@/services/authService";
+import { getBusiness, setBaseInfoApi } from "@/services/authService";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
 import { toast } from "react-toastify";
 
@@ -416,7 +416,7 @@ export default function AddBusinessModal({
           // category_ids: selectedCategories || []
         };
 
-        const response = await setBaseInfo(payload);
+        const response = await setBaseInfoApi(payload);
 
         if (response?.msg === 0) {
           if (isEditMode) {

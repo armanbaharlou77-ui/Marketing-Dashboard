@@ -84,13 +84,27 @@ export default function Page() {
   return (
     <>
       {
-        activeBusiness.status === 0 ? (
+        !activeBusiness ? (
           <div className="text-black">
-            امکان افزودن یا ویرایش کسب و کار وجود ندارد
+            ابتدا یک کسب‌وکار انتخاب کنید
+          </div>
+        ) : activeBusiness.status === 0 ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-8 text-center shadow-sm">
+            <p className="text-base font-bold text-amber-800 md:text-lg">
+              امکان افزودن یا ویرایش محصولات امکان پذیر نمیباشد
+            </p>
+            <p className="mt-2 text-sm text-amber-700/80">
+              وضعیت فعلی کسب‌وکار اجازه ویرایش محصولات را نمی‌دهد.
+            </p>
           </div>
         ) : activeBusiness.status === 2 ? (
-          <div className="text-black">
-            امکان افزودن یا ویرایش کسب و کار وجود ندارد
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-8 text-center shadow-sm">
+            <p className="text-base font-bold text-amber-800 md:text-lg">
+              امکان افزودن یا ویرایش محصولات امکان پذیر نمیباشد
+            </p>
+            <p className="mt-2 text-sm text-amber-700/80">
+              وضعیت فعلی کسب‌وکار اجازه ویرایش محصولات را نمی‌دهد.
+            </p>
           </div>
         ) : (
           <div className="space-y-8 text-black">
