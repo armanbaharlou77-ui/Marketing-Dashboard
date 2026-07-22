@@ -109,8 +109,8 @@ export default function Login_Step1() {
     <div className="min-h-screen bg-linear-to-br from-indigo-300 via-slate-200 to-indigo-200 flex items-center justify-center px-4 py-8 sm:py-10">
       <div className="w-full max-w-md rounded-3xl sm:rounded-4xl border border-white/60 bg-white/80 backdrop-blur-xl p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">
-            ورود
+          <h1 className="text-2xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">
+            به پنل ادمین خوش آمدید
           </h1>
 
           <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-500 leading-relaxed">
