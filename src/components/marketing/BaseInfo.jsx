@@ -291,7 +291,7 @@ export default function BaseInfo({
           )}
 
           <label className="mb-3 mt-4 block text-sm font-medium">
-            انتخاب لوکیشن روی نقشه
+            انتخاب مکان روی نقشه
           </label>
 
 

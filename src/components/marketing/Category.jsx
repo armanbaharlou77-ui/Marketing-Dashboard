@@ -288,7 +288,7 @@ export default function Category({ setCategories, initialCategoryIds = [] }) {
                                         {rowIndex + 1}
                                     </span>
                                     <span className="text-sm font-medium text-gray-700">
-                                        انتخاب دسته‌بندی
+                                        انتخاب دسته‌بندی اصلی
                                     </span>
                                 </div>
 

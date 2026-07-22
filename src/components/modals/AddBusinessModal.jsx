@@ -8,10 +8,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import BaseInfo from "@/components/marketing/BaseInfo";
-import ContactInfo from "@/components/marketing/ContactInfo";
-import PhotoGallery from "@/components/marketing/PhotoGallery";
-import Specifications from "@/components/marketing/Specifications";
-import Category from "@/components/marketing/Category";
 import { getBusiness, setBusiness, setBaseInfoApi } from "@/services/authService";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
 import { toast } from "react-toastify";
@@ -66,6 +62,7 @@ export default function AddBusinessModal({
 
   const [bannerItem, setBannerItem] = useState(null)
   const [selectedCategories, setSelectedCategories] = useState([])
+
 
 
   // --- Mapping helpers to populate form when editing an existing business ---
@@ -232,9 +229,15 @@ export default function AddBusinessModal({
       }
     }
   };
+  useEffect(() => {
+    const storedUser = localStorage?.getItem("dashboard-user");
+    if (storedUser) {
+      getStoredUser(storedUser)
+    }
 
-  const getStoredUser = () => {
-    const storedUser = localStorage.getItem("dashboard-user");
+  }, [])
+
+  const getStoredUser = (storedUser) => {
     if (!storedUser) return null;
     try {
       return JSON.parse(storedUser);
@@ -358,15 +361,15 @@ export default function AddBusinessModal({
       nextErrors.about = "درباره کسب و کار الزامی است.";
     if (!baseInfo.address.trim()) nextErrors.address = "آدرس الزامی است.";
 
-    const hasSelectedImage = galleryItems.some(
-      (item) => item.image || item.imagePreview || item.uploadedUrl,
-    );
+    // const hasSelectedImage = galleryItems.some(
+    //   (item) => item.image || item.imagePreview || item.uploadedUrl,
+    // );
 
-    // if (!hasSelectedImage) nextErrors.gallery = "حداقل یک عکس باید انتخاب شود.";
+    // // if (!hasSelectedImage) nextErrors.gallery = "حداقل یک عکس باید انتخاب شود.";
 
-    const pendingUpload = galleryItems.some(
-      (item) => item.image && !item.uploadedUrl && item.uploading,
-    );
+    // const pendingUpload = galleryItems.some(
+    //   (item) => item.image && !item.uploadedUrl && item.uploading,
+    // );
 
     // if (pendingUpload)
     //   nextErrors.gallery = "لطفا صبر کنید تا آپلود عکس‌ها کامل شود.";
@@ -481,6 +484,7 @@ export default function AddBusinessModal({
       }
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

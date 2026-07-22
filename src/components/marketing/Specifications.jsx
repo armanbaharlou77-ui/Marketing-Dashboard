@@ -164,26 +164,24 @@ export default function Specifications({ initialSections, onSpecificationsChange
             key={section.id}
             className="rounded-2xl border border-gray-300 bg-white/70 p-4 shadow-sm"
           >
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <span className="text-sm font-medium text-gray-700">
-                بخش {section.id}
-              </span>
-              <button
-                type="button"
-                onClick={() => handleRemoveSection(section.id)}
-                className="rounded-xl p-1 text-sm text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
-              >
-                <Trash2Icon />
-              </button>
-            </div>
 
             <div className="space-y-2">
               <div className="space-y-1">
-                <label className="text-md font-medium text-gray-700">
-                  عنوان بخش
-                </label>
+                <div className="flex justify-between">
+                  <label className="text-lg font-medium text-gray-700">
+                    عنوان بخش
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSection(section.id)}
+                    className="rounded-xl p-1 text-sm text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
+                  >
+                    <Trash2Icon />
+                  </button>
+
+                </div>
                 <input
-                  className="mt-2 h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   type="text"
                   placeholder="مشخصات فنی"
                   value={section.sectionTitle}
@@ -192,23 +190,22 @@ export default function Specifications({ initialSections, onSpecificationsChange
                   }
                 />
               </div>
+              <div className="w-full bg-blue-300 h-0.5 mt-5" ></div>
 
-              <div className="space-y-4">
+
+
+              <div className="space-y-1">
+                <div className="mt-6 grid grid-cols-2">
+                  <span className="text-base font-medium text-gray-600">
+                    عنوان مشخصه
+                  </span>
+                  <span className="text-base font-medium text-gray-600">
+                    مقدار
+                  </span>
+
+                </div>
                 {section.items.map((item) => (
-                  <>
-                    <div key={item.id} className="mb-4 flex items-center justify-between gap-3">
-                      <span className="text-sm font-medium text-gray-600">
-                        {/* مشخصه {item.id} */}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(section.id, item.id)}
-                        className="rounded-xl p-1 text-sm text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
-                      >
-                        <Trash2Icon className="h-5 w-5" />
-                      </button>
-                    </div>
-
+                  <div key={item.id}>
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                       <div className="space-y-1">
                         {/* <label className="text-md font-medium text-gray-700">
@@ -228,7 +225,7 @@ export default function Specifications({ initialSections, onSpecificationsChange
                           }
                         />
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 flex gap-2">
                         {/* <label className="text-md font-medium text-gray-700">
                           مقدار
                         </label> */}
@@ -245,9 +242,16 @@ export default function Specifications({ initialSections, onSpecificationsChange
                             )
                           }
                         />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(section.id, item.id)}
+                          className="rounded-xl p-1 text-sm text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
+                        >
+                          <Trash2Icon className="h-5 w-5" />
+                        </button>
                       </div>
                     </div>
-                  </>
+                  </div>
                 ))}
               </div>
 
