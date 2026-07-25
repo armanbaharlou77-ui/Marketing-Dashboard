@@ -474,29 +474,51 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     };
 
     // status === 0 → فقط اطلاعات پایه با setBaseInfo
-    if (isBaseInfoOnly) {
-      setIsSaving(true);
-      try {
-        const response = await setBaseInfoApi(basePayload);
+    // if (isBaseInfoOnly) {
+    //   setIsSaving(true);
+    //   try {
+    //     const response = await setBusiness(basePayload);
 
-        if (response?.msg === 0) {
-          const updatedBusiness = buildUpdatedBusiness(
-            business,
-            basePayload,
-            response,
-          );
-          persistEditedBusiness(updatedBusiness, userInfo, setActiveBusiness);
-          toast.success(response.msg_txt || "تغییرات با موفقیت ذخیره شد.");
-        } else {
-          toast.error(response?.msg_txt || "ثبت تغییرات ناموفق بود.");
-        }
-      } catch (error) {
-        console.error(error);
-        toast.error("خطا در ذخیره تغییرات");
-      } finally {
-        setIsSaving(false);
+    //     if (response?.msg === 0) {
+    //       const updatedBusiness = buildUpdatedBusiness(
+    //         business,
+    //         basePayload,
+    //         response,
+    //       );
+    //       persistEditedBusiness(updatedBusiness, userInfo, setActiveBusiness);
+    //       toast.success(response.msg_txt || "تغییرات با موفقیت ذخیره شد.");
+    //     } else {
+    //       toast.error(response?.msg_txt || "ثبت تغییرات ناموفق بود.");
+    //     }
+    //   } catch (error) {
+    //     console.error(error);
+    //     toast.error("خطا در ذخیره تغییرات");
+    //   } finally {
+    //     setIsSaving(false);
+    //   }
+    //   return;
+    // }
+
+    setIsSaving(true);
+    try {
+      const response = await setBusiness(basePayload);
+
+      if (response?.msg === 0) {
+        const updatedBusiness = buildUpdatedBusiness(
+          business,
+          basePayload,
+          response,
+        );
+        persistEditedBusiness(updatedBusiness, userInfo, setActiveBusiness);
+        toast.success(response.msg_txt || "تغییرات با موفقیت ذخیره شد.");
+      } else {
+        toast.error(response?.msg_txt || "ثبت تغییرات ناموفق بود.");
       }
-      return;
+    } catch (error) {
+      console.error(error);
+      toast.error("خطا در ذخیره تغییرات");
+    } finally {
+      setIsSaving(false);
     }
 
     // status === 1 یا 3 → فرم کامل با setBusiness
@@ -529,10 +551,7 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     );
 
     if (!hasSelectedImage) {
-      failValidation(
-        { gallery: "حداقل یک عکس باید انتخاب شود." },
-        "gallery",
-      );
+      failValidation({ gallery: "حداقل یک عکس باید انتخاب شود." }, "gallery");
       return;
     }
 
@@ -579,20 +598,14 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     const specs = Array.isArray(specificationsData) ? specificationsData : [];
     for (const section of specs) {
       if (!section?.sectionTitle?.trim()) {
-        failValidation(
-          { specs: "عنوان هر بخش مشخصات الزامی است." },
-          "specs",
-        );
+        failValidation({ specs: "عنوان هر بخش مشخصات الزامی است." }, "specs");
         return;
       }
 
       const items = Array.isArray(section?.items) ? section.items : [];
       for (const item of items) {
         if (!item?.title?.trim()) {
-          failValidation(
-            { specs: "عنوان هر مشخصه الزامی است." },
-            "specs",
-          );
+          failValidation({ specs: "عنوان هر مشخصه الزامی است." }, "specs");
           return;
         }
       }
@@ -658,15 +671,29 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
 
   return (
     <>
-      {isFullEdit && (
+      {/* {isFullEdit && (
         <SectionTabs
           tabs={editorTabs}
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
-      )}
+      )} */}
 
-      <div className={isFullEdit && activeTab !== "base" ? "hidden" : ""}>
+      <SectionTabs
+        tabs={editorTabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+
+      {/* <BaseInfo
+        {...baseInfo}
+        position={position}
+        setPosition={setPosition}
+        onInfoChange={handleInfoChange}
+        errors={errors}
+      /> */}
+
+      <div className={activeTab !== "base" ? "hidden" : ""}>
         <BaseInfo
           {...baseInfo}
           position={position}
@@ -676,43 +703,72 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
         />
       </div>
 
-      {isFullEdit ? (
-        <>
-          <div className={activeTab !== "gallery" ? "hidden" : ""}>
-            <PhotoGallery
-              galleryItems={galleryItems}
-              onGalleryChange={handleGalleryChange}
-              bannerItem={bannerItem}
-              onBannerChange={setBannerItem}
-              error={errors.gallery}
-              bannerError={errors.banner}
-            />
-          </div>
-          <div className={activeTab !== "category" ? "hidden" : ""}>
-            <Category
-              key={business?.id ?? "new"}
-              setCategories={setSelectedCategories}
-              initialCategoryIds={getBusinessCategories(business)}
-              validationError={errors.category}
-            />
-          </div>
-          <div className={activeTab !== "specs" ? "hidden" : ""}>
-            <Specifications
-              initialSections={specificationsData}
-              onSpecificationsChange={setSpecificationsData}
-              error={errors.specs}
-            />
-          </div>
-          <div className={activeTab !== "contact" ? "hidden" : ""}>
-            <ContactInfo
-              initialPhoneItems={contactData.phones}
-              initialLinkItems={contactData.links}
-              initialSocialMedia={contactData.socials}
-              onContactChange={setContactData}
-            />
-          </div>
-        </>
-      ) : null}
+      <>
+        <div className={activeTab !== "gallery" ? "hidden" : ""}>
+          <PhotoGallery
+            galleryItems={galleryItems}
+            onGalleryChange={handleGalleryChange}
+            bannerItem={bannerItem}
+            onBannerChange={setBannerItem}
+            error={errors.gallery}
+            bannerError={errors.banner}
+          />
+        </div>
+        <div className={activeTab !== "category" ? "hidden" : ""}>
+          <Category
+            key={business?.id ?? "new"}
+            setCategories={setSelectedCategories}
+            initialCategoryIds={getBusinessCategories(business)}
+            validationError={errors.category}
+          />
+        </div>
+        <div className={activeTab !== "specs" ? "hidden" : ""}>
+          <Specifications
+            initialSections={specificationsData}
+            onSpecificationsChange={setSpecificationsData}
+            error={errors.specs}
+          />
+        </div>
+        <div className={activeTab !== "contact" ? "hidden" : ""}>
+          <ContactInfo
+            initialPhoneItems={contactData.phones}
+            initialLinkItems={contactData.links}
+            initialSocialMedia={contactData.socials}
+            onContactChange={setContactData}
+          />
+        </div>
+      </>
+
+      {/* <>
+        <PhotoGallery
+          galleryItems={galleryItems}
+          onGalleryChange={handleGalleryChange}
+          bannerItem={bannerItem}
+          onBannerChange={setBannerItem}
+          error={errors.gallery}
+          bannerError={errors.banner}
+        />
+
+        <Category
+          key={business?.id ?? "new"}
+          setCategories={setSelectedCategories}
+          initialCategoryIds={getBusinessCategories(business)}
+          validationError={errors.category}
+        />
+
+        <Specifications
+          initialSections={specificationsData}
+          onSpecificationsChange={setSpecificationsData}
+          error={errors.specs}
+        />
+
+        <ContactInfo
+          initialPhoneItems={contactData.phones}
+          initialLinkItems={contactData.links}
+          initialSocialMedia={contactData.socials}
+          onContactChange={setContactData}
+        />
+      </> */}
 
       <div className="h-20" aria-hidden />
 
