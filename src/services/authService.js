@@ -216,7 +216,7 @@ export const setPost = async (formData, productId = 0) => {
       price: formData?.price,
       discount: formData?.discount,
       total_price: "",
-      status: 1,
+      status: formData?.status ?? 1,
     },
   });
 

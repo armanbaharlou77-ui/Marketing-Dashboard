@@ -1,19 +1,17 @@
 'use client';
 
-import React from "react";
-
-
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AddProductModal from "@/components/modals/AddProductModal";
-import { useEffect } from "react";
-import { getFeed } from "@/services/authService";
+import { getFeed, setPost } from "@/services/authService";
 import PostCard from "@/components/cards/PostCard";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
+import { toast } from "react-toastify";
 
 export default function Page() {
   const [products, setProducts] = useState();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [togglingProductId, setTogglingProductId] = useState(null);
   const { activeBusiness } = useActiveBusiness();
   const activeBusinessId = activeBusiness?.id;
 
@@ -22,29 +20,10 @@ export default function Page() {
     setIsModalOpen(true);
   };
 
-  const handleSaveProduct = (productData) => {
-    if (selectedProduct) {
-      // حالت ویرایش
-      setProducts((prevProducts) =>
-        prevProducts.map((p) =>
-          p.id === productData.id ? productData : p
-        )
-      );
-    } else {
-      // حالت افزودن
-      const newProduct = {
-        id: Date.now(),
-        ...productData,
-      };
-      setProducts((prevProducts) => [newProduct, ...prevProducts]);
-    }
-  };
-
   const handleAddProduct = () => {
     setSelectedProduct(null);
     setIsModalOpen(true);
   };
-
 
   const fetchFeed = async () => {
     try {
@@ -53,6 +32,39 @@ export default function Page() {
       console.log("Fetched feed data:", feedData);
     } catch (error) {
       console.error("Error fetching feed:", error);
+    }
+  };
+
+  const handleToggleStatus = async (product) => {
+    const nextStatus = Number(product.status) === 1 ? 0 : 1;
+
+    setTogglingProductId(product.id);
+    try {
+      const data = await setPost(
+        {
+          title: product.name || "",
+          description: product.description || "",
+          image: product.image || "",
+          price: product.price || "",
+          discount: product.discount?.toString?.().replace("%", "") || product.discount || "",
+          status: nextStatus,
+        },
+        product.id
+      );
+
+      if (data.msg === 0) {
+        toast.success(nextStatus === 1 ? "محصول فعال شد" : "محصول غیرفعال شد");
+        await fetchFeed();
+      } else if (data.msg === 1) {
+        toast.error(data.msg_txt || "خطا در تغییر وضعیت محصول");
+      } else {
+        toast.error("خطا در ارسال اطلاعات");
+      }
+    } catch (error) {
+      console.error("Error toggling product status:", error);
+      toast.error("خطا در تغییر وضعیت محصول");
+    } finally {
+      setTogglingProductId(null);
     }
   };
 
@@ -124,6 +136,8 @@ export default function Page() {
                   key={product.id}
                   product={product}
                   handleEditClick={handleEditClick}
+                  handleToggleStatus={handleToggleStatus}
+                  isToggling={togglingProductId === product.id}
                 />
               ))}
             </div>

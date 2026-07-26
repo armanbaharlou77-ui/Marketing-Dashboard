@@ -168,7 +168,7 @@ export default function AddProductModal({ isOpen, onClose, product, onSuccess })
     setIsLoading(true);
     if (!isEditMode) {
       try {
-        const data = await setPost(formData);
+        const data = await setPost({ ...formData, status: 1 });
         if (data.msg === 0) {
           toast.success('محصول با موفقیت ثبت شد');
           onClose();
@@ -185,7 +185,10 @@ export default function AddProductModal({ isOpen, onClose, product, onSuccess })
       }
     } else {
       try {
-        const data = await setPost(formData, product.id);
+        const data = await setPost(
+          { ...formData, status: product.status ?? 1 },
+          product.id
+        );
         if (data.msg === 0) {
           toast.success('تغییرات با موفقیت ذخیره شد');
           onClose();
