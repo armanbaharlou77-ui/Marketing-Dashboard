@@ -8,7 +8,7 @@ import PhotoGallery from "@/components/marketing/PhotoGallery";
 import Category from "@/components/marketing/Category";
 import SectionTabs from "@/components/ui/SectionTabs";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
-import { setBaseInfoApi, setBusiness } from "@/services/authService";
+import { setBusiness } from "@/services/authService";
 import { toast } from "react-toastify";
 
 // ۱. نگاشت فیلدهای اصلی بر اساس آبجکت سرور
@@ -371,6 +371,52 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("base");
+  const [maxUnlockedIndex, setMaxUnlockedIndex] = useState(0);
+
+  const editorTabs = [
+    { id: "base", label: "اطلاعات پایه" },
+    { id: "gallery", label: "گالری تصاویر" },
+    { id: "category", label: "دسته‌بندی" },
+    { id: "specs", label: "مشخصات" },
+    { id: "contact", label: "راه‌های ارتباطی" },
+  ];
+
+  const getUnlockedStorageKey = (businessId) =>
+    `dashboard-marketing-unlocked:${businessId ?? "unknown"}`;
+
+  const readUnlockedIndex = (businessId) => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const raw = sessionStorage.getItem(getUnlockedStorageKey(businessId));
+      const parsed = Number(raw);
+      if (Number.isFinite(parsed) && parsed >= 0) {
+        return Math.min(parsed, editorTabs.length - 1);
+      }
+    } catch {
+      // ignore
+    }
+    return 0;
+  };
+
+  const persistUnlockedIndex = (businessId, index) => {
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.setItem(
+        getUnlockedStorageKey(businessId),
+        String(Math.max(0, index)),
+      );
+    } catch {
+      // ignore
+    }
+  };
+
+  const unlockUpTo = (index) => {
+    setMaxUnlockedIndex((prev) => {
+      const next = Math.max(prev, index);
+      persistUnlockedIndex(business?.id, next);
+      return next;
+    });
+  };
 
   // سینک کردن آنی فیلدها بدون نیاز به رفرش پس از دریافت پاسخ جدید سرور
   // همگام‌سازی فیلدها هنگام تعویض کسب‌وکار یا ثبت نهایی
@@ -402,6 +448,13 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     }
   }, [business]);
 
+  useEffect(() => {
+    const unlocked = readUnlockedIndex(business?.id);
+    setMaxUnlockedIndex(unlocked);
+    setActiveTab("base");
+    setErrors({});
+  }, [business?.id]);
+
   const handleInfoChange = (info = {}) => {
     setBaseInfo((prev) => ({ ...prev, ...info }));
   };
@@ -416,9 +469,251 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
   };
 
   const businessStatus = business?.status;
-  const isBaseInfoOnly = businessStatus === 0;
-  const isFullEdit = businessStatus === 1 || businessStatus === 3;
   const isEditBlocked = businessStatus === 2;
+
+  const activeTabIndex = editorTabs.findIndex((tab) => tab.id === activeTab);
+  const isLastTab =
+    activeTabIndex === editorTabs.length - 1 || activeTabIndex < 0;
+
+  const failValidation = (nextErrors, tab) => {
+    setErrors(nextErrors);
+    if (tab) setActiveTab(tab);
+    toast.error(Object.values(nextErrors)[0]);
+    return false;
+  };
+
+  const isTabFilled = (tabId) => {
+    if (tabId === "base") {
+      return Boolean(
+        baseInfo.businessTitle?.trim() &&
+          baseInfo.shortDescription?.trim() &&
+          baseInfo.about?.trim() &&
+          baseInfo.address?.trim() &&
+          baseInfo.city?.trim(),
+      );
+    }
+
+    if (tabId === "gallery") {
+      const hasSelectedImage = galleryItems.some(
+        (item) => item.image || item.imagePreview || item.uploadedUrl,
+      );
+      const pendingUpload = galleryItems.some(
+        (item) => item.image && !item.uploadedUrl && item.uploading,
+      );
+      const uploadedImgs = galleryItems.filter((item) => item.uploadedUrl);
+      const hasBanner = Boolean(
+        bannerItem?.uploadedUrl || bannerItem?.imagePreview,
+      );
+      const bannerPending = Boolean(
+        bannerItem?.image && !bannerItem?.uploadedUrl && bannerItem?.uploading,
+      );
+
+      return (
+        hasSelectedImage &&
+        !pendingUpload &&
+        uploadedImgs.length > 0 &&
+        hasBanner &&
+        !bannerPending
+      );
+    }
+
+    if (tabId === "category") {
+      return (selectedCategories || []).some((id) => id != null && id !== "");
+    }
+
+    if (tabId === "specs") {
+      const specs = Array.isArray(specificationsData) ? specificationsData : [];
+      if (specs.length === 0) return false;
+      for (const section of specs) {
+        if (!section?.sectionTitle?.trim()) return false;
+        const items = Array.isArray(section?.items) ? section.items : [];
+        if (items.length === 0) return false;
+        for (const item of items) {
+          if (!item?.title?.trim()) return false;
+        }
+      }
+      return true;
+    }
+
+    // contact اختیاری است؛ اگر به این تب رسیده باشیم پر محسوب می‌شود
+    if (tabId === "contact") return true;
+
+    return false;
+  };
+
+  const getFilledThroughIndex = () => {
+    let filledThrough = -1;
+    for (let i = 0; i < editorTabs.length; i++) {
+      if (!isTabFilled(editorTabs[i].id)) break;
+      filledThrough = i;
+    }
+    return filledThrough;
+  };
+
+  const filledThroughIndex = getFilledThroughIndex();
+  const filledUnlockIndex =
+    filledThroughIndex < 0
+      ? 0
+      : Math.min(filledThroughIndex + 1, editorTabs.length - 1);
+  const effectiveMaxUnlocked = Math.max(
+    maxUnlockedIndex,
+    filledUnlockIndex,
+    Math.max(filledThroughIndex, 0),
+  );
+
+  useEffect(() => {
+    if (effectiveMaxUnlocked > maxUnlockedIndex) {
+      unlockUpTo(effectiveMaxUnlocked);
+    }
+  }, [effectiveMaxUnlocked, maxUnlockedIndex, business?.id]);
+
+  const validateTab = (tabId) => {
+    if (tabId === "base") {
+      const nextErrors = {};
+      if (!baseInfo.businessTitle?.trim()) {
+        nextErrors.businessTitle = "عنوان کسب و کار الزامی است.";
+      }
+      if (!baseInfo.shortDescription?.trim()) {
+        nextErrors.shortDescription = "توضیح کوتاه الزامی است.";
+      }
+      if (!baseInfo.about?.trim()) {
+        nextErrors.about = "درباره کسب و کار الزامی است.";
+      }
+      if (!baseInfo.address?.trim()) {
+        nextErrors.address = "آدرس الزامی است.";
+      }
+      if (!baseInfo.city?.trim()) {
+        nextErrors.city = "انتخاب شهر الزامی است.";
+      }
+      if (Object.keys(nextErrors).length > 0) {
+        return failValidation(nextErrors, "base");
+      }
+      return true;
+    }
+
+    if (tabId === "gallery") {
+      const hasSelectedImage = galleryItems.some(
+        (item) => item.image || item.imagePreview || item.uploadedUrl,
+      );
+      const pendingUpload = galleryItems.some(
+        (item) => item.image && !item.uploadedUrl && item.uploading,
+      );
+      const uploadedImgs = galleryItems.filter((item) => item.uploadedUrl);
+      const hasBanner = Boolean(
+        bannerItem?.uploadedUrl || bannerItem?.imagePreview,
+      );
+      const bannerPending = Boolean(
+        bannerItem?.image && !bannerItem?.uploadedUrl && bannerItem?.uploading,
+      );
+
+      if (!hasSelectedImage) {
+        return failValidation(
+          { gallery: "حداقل یک عکس باید انتخاب شود." },
+          "gallery",
+        );
+      }
+      if (pendingUpload) {
+        return failValidation(
+          { gallery: "لطفا صبر کنید تا آپلود عکس‌ها کامل شود." },
+          "gallery",
+        );
+      }
+      if (uploadedImgs.length === 0) {
+        return failValidation(
+          { gallery: "حداقل یک عکس آپلود شده باید وجود داشته باشد." },
+          "gallery",
+        );
+      }
+      if (!hasBanner) {
+        return failValidation({ banner: "انتخاب بنر الزامی است." }, "gallery");
+      }
+      if (bannerPending) {
+        return failValidation(
+          { banner: "لطفا صبر کنید تا آپلود بنر کامل شود." },
+          "gallery",
+        );
+      }
+      return true;
+    }
+
+    if (tabId === "category") {
+      const selectedCategoryIds = (selectedCategories || []).filter(
+        (id) => id != null && id !== "",
+      );
+      if (selectedCategoryIds.length === 0) {
+        return failValidation(
+          { category: "حداقل یک دسته‌بندی باید انتخاب شود." },
+          "category",
+        );
+      }
+      return true;
+    }
+
+    if (tabId === "specs") {
+      const specs = Array.isArray(specificationsData) ? specificationsData : [];
+      for (const section of specs) {
+        if (!section?.sectionTitle?.trim()) {
+          return failValidation(
+            { specs: "عنوان هر بخش مشخصات الزامی است." },
+            "specs",
+          );
+        }
+        const items = Array.isArray(section?.items) ? section.items : [];
+        for (const item of items) {
+          if (!item?.title?.trim()) {
+            return failValidation(
+              { specs: "عنوان هر مشخصه الزامی است." },
+              "specs",
+            );
+          }
+        }
+      }
+      return true;
+    }
+
+    // contact: بدون validation
+    return true;
+  };
+
+  const handleNext = () => {
+    if (!validateTab(activeTab)) return;
+
+    const nextTab = editorTabs[activeTabIndex + 1];
+    if (nextTab) {
+      unlockUpTo(activeTabIndex + 1);
+      setErrors({});
+      setActiveTab(nextTab.id);
+    }
+  };
+
+  const handlePrev = () => {
+    const prevTab = editorTabs[activeTabIndex - 1];
+    if (prevTab) {
+      setErrors({});
+      setActiveTab(prevTab.id);
+    }
+  };
+
+  const handleTabChange = (tabId) => {
+    const targetIndex = editorTabs.findIndex((tab) => tab.id === tabId);
+    if (targetIndex < 0 || targetIndex === activeTabIndex) return;
+
+    // تب‌های قبلی / آنلاک‌شده (شامل تب‌های پرشده): آزاد
+    if (targetIndex <= effectiveMaxUnlocked) {
+      setErrors({});
+      setActiveTab(tabId);
+      return;
+    }
+
+    // برای پرش جلو: همه تب‌های قبل از هدف باید validate باشند
+    for (let i = 0; i < targetIndex; i++) {
+      if (!validateTab(editorTabs[i].id)) return;
+    }
+
+    unlockUpTo(targetIndex);
+    setErrors({});
+    setActiveTab(tabId);
+  };
 
   const handleSubmit = async () => {
     if (!business) {
@@ -431,36 +726,25 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
       return;
     }
 
-    const failValidation = (nextErrors, tab) => {
-      setErrors(nextErrors);
-      if (tab) setActiveTab(tab);
-      toast.error(Object.values(nextErrors)[0]);
-    };
-
-    const nextErrors = {};
-    if (!baseInfo.businessTitle?.trim()) {
-      nextErrors.businessTitle = "عنوان کسب و کار الزامی است.";
-    }
-    if (!baseInfo.shortDescription?.trim()) {
-      nextErrors.shortDescription = "توضیح کوتاه الزامی است.";
-    }
-    if (!baseInfo.about?.trim()) {
-      nextErrors.about = "درباره کسب و کار الزامی است.";
-    }
-    if (!baseInfo.address?.trim()) {
-      nextErrors.address = "آدرس الزامی است.";
-    }
-    if (!baseInfo.city?.trim()) {
-      nextErrors.city = "انتخاب شهر الزامی است.";
-    }
-
-    if (Object.keys(nextErrors).length > 0) {
-      failValidation(nextErrors, "base");
-      return;
+    // قبل از ثبت نهایی، همه تب‌های دارای validation را چک کن
+    for (const tab of editorTabs) {
+      if (tab.id === "contact") continue;
+      if (!validateTab(tab.id)) return;
     }
 
     const businessId = business?.id ?? 0;
-    const basePayload = {
+    const uploadedImgs = galleryItems
+      .filter((item) => item.uploadedUrl)
+      .map((item) => ({
+        url: item.uploadedUrl,
+        title: item.title || "",
+        alt: item.alt || "",
+      }));
+    const selectedCategoryIds = (selectedCategories || []).filter(
+      (id) => id != null && id !== "",
+    );
+
+    const payload = {
       businessId,
       ownerId: business?.owner_id,
       businessTitle: baseInfo.businessTitle,
@@ -471,148 +755,6 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
       about: baseInfo.about,
       lat: position ? position.lat : null,
       lng: position ? position.lng : null,
-    };
-
-    // status === 0 → فقط اطلاعات پایه با setBaseInfo
-    // if (isBaseInfoOnly) {
-    //   setIsSaving(true);
-    //   try {
-    //     const response = await setBusiness(basePayload);
-
-    //     if (response?.msg === 0) {
-    //       const updatedBusiness = buildUpdatedBusiness(
-    //         business,
-    //         basePayload,
-    //         response,
-    //       );
-    //       persistEditedBusiness(updatedBusiness, userInfo, setActiveBusiness);
-    //       toast.success(response.msg_txt || "تغییرات با موفقیت ذخیره شد.");
-    //     } else {
-    //       toast.error(response?.msg_txt || "ثبت تغییرات ناموفق بود.");
-    //     }
-    //   } catch (error) {
-    //     console.error(error);
-    //     toast.error("خطا در ذخیره تغییرات");
-    //   } finally {
-    //     setIsSaving(false);
-    //   }
-    //   return;
-    // }
-
-    setIsSaving(true);
-    try {
-      const response = await setBusiness(basePayload);
-
-      if (response?.msg === 0) {
-        const updatedBusiness = buildUpdatedBusiness(
-          business,
-          basePayload,
-          response,
-        );
-        persistEditedBusiness(updatedBusiness, userInfo, setActiveBusiness);
-        toast.success(response.msg_txt || "تغییرات با موفقیت ذخیره شد.");
-      } else {
-        toast.error(response?.msg_txt || "ثبت تغییرات ناموفق بود.");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("خطا در ذخیره تغییرات");
-    } finally {
-      setIsSaving(false);
-    }
-
-    // status === 1 یا 3 → فرم کامل با setBusiness
-    if (!isFullEdit) {
-      toast.error("وضعیت این کسب‌وکار برای ویرایش پشتیبانی نمی‌شود.");
-      return;
-    }
-
-    const hasSelectedImage = galleryItems.some(
-      (item) => item.image || item.imagePreview || item.uploadedUrl,
-    );
-
-    const pendingUpload = galleryItems.some(
-      (item) => item.image && !item.uploadedUrl && item.uploading,
-    );
-
-    const uploadedImgs = galleryItems
-      .filter((item) => item.uploadedUrl)
-      .map((item) => ({
-        url: item.uploadedUrl,
-        title: item.title || "",
-        alt: item.alt || "",
-      }));
-
-    const hasBanner = Boolean(
-      bannerItem?.uploadedUrl || bannerItem?.imagePreview,
-    );
-    const bannerPending = Boolean(
-      bannerItem?.image && !bannerItem?.uploadedUrl && bannerItem?.uploading,
-    );
-
-    if (!hasSelectedImage) {
-      failValidation({ gallery: "حداقل یک عکس باید انتخاب شود." }, "gallery");
-      return;
-    }
-
-    if (pendingUpload) {
-      failValidation(
-        { gallery: "لطفا صبر کنید تا آپلود عکس‌ها کامل شود." },
-        "gallery",
-      );
-      return;
-    }
-
-    if (hasSelectedImage && uploadedImgs.length === 0) {
-      failValidation(
-        { gallery: "حداقل یک عکس آپلود شده باید وجود داشته باشد." },
-        "gallery",
-      );
-      return;
-    }
-
-    if (!hasBanner) {
-      failValidation({ banner: "انتخاب بنر الزامی است." }, "gallery");
-      return;
-    }
-
-    if (bannerPending) {
-      failValidation(
-        { banner: "لطفا صبر کنید تا آپلود بنر کامل شود." },
-        "gallery",
-      );
-      return;
-    }
-
-    const selectedCategoryIds = (selectedCategories || []).filter(
-      (id) => id != null && id !== "",
-    );
-    if (selectedCategoryIds.length === 0) {
-      failValidation(
-        { category: "حداقل یک دسته‌بندی باید انتخاب شود." },
-        "category",
-      );
-      return;
-    }
-
-    const specs = Array.isArray(specificationsData) ? specificationsData : [];
-    for (const section of specs) {
-      if (!section?.sectionTitle?.trim()) {
-        failValidation({ specs: "عنوان هر بخش مشخصات الزامی است." }, "specs");
-        return;
-      }
-
-      const items = Array.isArray(section?.items) ? section.items : [];
-      for (const item of items) {
-        if (!item?.title?.trim()) {
-          failValidation({ specs: "عنوان هر مشخصه الزامی است." }, "specs");
-          return;
-        }
-      }
-    }
-
-    const payload = {
-      ...basePayload,
       imgs: uploadedImgs,
       links: contactData.links || [],
       socials: Object.entries(contactData.socials || {}).map(([key, val]) => ({
@@ -661,37 +803,14 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     );
   }
 
-  const editorTabs = [
-    { id: "base", label: "اطلاعات پایه" },
-    { id: "gallery", label: "گالری تصاویر" },
-    { id: "category", label: "دسته‌بندی" },
-    { id: "specs", label: "مشخصات" },
-    { id: "contact", label: "راه‌های ارتباطی" },
-  ];
-
   return (
     <>
-      {/* {isFullEdit && (
-        <SectionTabs
-          tabs={editorTabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-      )} */}
-
       <SectionTabs
         tabs={editorTabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
+        maxUnlockedIndex={effectiveMaxUnlocked}
       />
-
-      {/* <BaseInfo
-        {...baseInfo}
-        position={position}
-        setPosition={setPosition}
-        onInfoChange={handleInfoChange}
-        errors={errors}
-      /> */}
 
       <div className={activeTab !== "base" ? "hidden" : ""}>
         <BaseInfo
@@ -703,43 +822,7 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
         />
       </div>
 
-      <>
-        <div className={activeTab !== "gallery" ? "hidden" : ""}>
-          <PhotoGallery
-            galleryItems={galleryItems}
-            onGalleryChange={handleGalleryChange}
-            bannerItem={bannerItem}
-            onBannerChange={setBannerItem}
-            error={errors.gallery}
-            bannerError={errors.banner}
-          />
-        </div>
-        <div className={activeTab !== "category" ? "hidden" : ""}>
-          <Category
-            key={business?.id ?? "new"}
-            setCategories={setSelectedCategories}
-            initialCategoryIds={getBusinessCategories(business)}
-            validationError={errors.category}
-          />
-        </div>
-        <div className={activeTab !== "specs" ? "hidden" : ""}>
-          <Specifications
-            initialSections={specificationsData}
-            onSpecificationsChange={setSpecificationsData}
-            error={errors.specs}
-          />
-        </div>
-        <div className={activeTab !== "contact" ? "hidden" : ""}>
-          <ContactInfo
-            initialPhoneItems={contactData.phones}
-            initialLinkItems={contactData.links}
-            initialSocialMedia={contactData.socials}
-            onContactChange={setContactData}
-          />
-        </div>
-      </>
-
-      {/* <>
+      <div className={activeTab !== "gallery" ? "hidden" : ""}>
         <PhotoGallery
           galleryItems={galleryItems}
           onGalleryChange={handleGalleryChange}
@@ -748,39 +831,53 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
           error={errors.gallery}
           bannerError={errors.banner}
         />
-
+      </div>
+      <div className={activeTab !== "category" ? "hidden" : ""}>
         <Category
           key={business?.id ?? "new"}
           setCategories={setSelectedCategories}
           initialCategoryIds={getBusinessCategories(business)}
           validationError={errors.category}
         />
-
+      </div>
+      <div className={activeTab !== "specs" ? "hidden" : ""}>
         <Specifications
           initialSections={specificationsData}
           onSpecificationsChange={setSpecificationsData}
           error={errors.specs}
         />
-
+      </div>
+      <div className={activeTab !== "contact" ? "hidden" : ""}>
         <ContactInfo
           initialPhoneItems={contactData.phones}
           initialLinkItems={contactData.links}
           initialSocialMedia={contactData.socials}
           onContactChange={setContactData}
         />
-      </> */}
+      </div>
 
       <div className="h-20" aria-hidden />
 
       <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center px-4 md:left-4 xl:left-30 sm:bottom-10 sm:justify-end sm:px-6 lg:px-8">
-        <div className="pointer-events-auto w-full max-w-[900px] sm:flex sm:justify-end">
+        <div className="pointer-events-auto flex w-full max-w-[900px] flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          {activeTabIndex > 0 ? (
+            <button
+              type="button"
+              onClick={handlePrev}
+              disabled={isSaving}
+              className="w-full rounded-2xl bg-amber-400 px-10 py-3.5 text-sm font-bold tracking-wide text-white shadow-sm ring-1  transition duration-200 hover:bg-amber-500 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[150px]"
+            >
+              قبلی
+            </button>
+          ) : null}
+
           <button
             type="button"
-            onClick={handleSubmit}
+            onClick={isLastTab ? handleSubmit : handleNext}
             disabled={isSaving}
-            className="w-full rounded-2xl bg-indigo-600 px-10 py-3.5 text-sm font-bold tracking-wide text-white shadow-[0_8px_30px_rgba(79,70,229,0.28)] transition duration-200 hover:bg-indigo-700 hover:shadow-[0_10px_36px_rgba(79,70,229,0.38)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none sm:w-auto sm:min-w-[168px]"
+            className="w-full rounded-2xl bg-indigo-600 px-10 py-3.5 text-sm font-bold tracking-wide text-white shadow-[0_8px_30px_rgba(79,70,229,0.28)] transition duration-200 hover:bg-indigo-700 hover:shadow-[0_10px_36px_rgba(79,70,229,0.38)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none sm:w-auto sm:min-w-[150px]"
           >
-            {isSaving ? "در حال ذخیره..." : "ثبت نهایی"}
+            {isSaving ? "در حال ذخیره..." : isLastTab ? "ثبت نهایی" : "بعدی"}
           </button>
         </div>
       </div>

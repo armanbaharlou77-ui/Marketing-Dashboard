@@ -67,6 +67,7 @@ export default function Sidebar() {
   const logOut = () => {
     Cookies.remove("owner-token", { path: "/" });
     localStorage.clear();
+    sessionStorage.clear();
     router.push("/login");
   };
 

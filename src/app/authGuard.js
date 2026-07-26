@@ -50,6 +50,7 @@ const hasBusiness = () => {
 const clearAuthSession = () => {
   Cookies.remove("owner-token", { path: "/" });
   localStorage.clear();
+  sessionStorage.clear();
 };
 
 export default function AuthGuard({ children }) {

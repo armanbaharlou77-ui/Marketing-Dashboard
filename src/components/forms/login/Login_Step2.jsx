@@ -33,6 +33,7 @@ export default function Login_Step2() {
   const clearIncompleteLoginSession = () => {
     Cookies.remove("owner-token", { path: "/" });
     localStorage.clear();
+    sessionStorage.clear();
   };
 
   const goToPhoneEntry = () => {
