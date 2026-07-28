@@ -7,6 +7,7 @@ const createSpecificationItem = (id) => ({
   id,
   title: "",
   value: "",
+  description: "",
 });
 
 const createSpecificationSection = (id) => ({
@@ -26,16 +27,20 @@ const normalizeSpecificationSections = (sections) => {
     items:
       Array.isArray(section?.items) && section.items.length > 0
         ? section.items.map((item, itemIndex) => ({
-            id: item?.id ?? itemIndex + 1,
-            title: item?.title ?? item?.name ?? "",
-            value: item?.value ?? item?.description ?? "",
-          }))
+          id: item?.id ?? itemIndex + 1,
+          title: item?.title ?? item?.name ?? "",
+          value: item?.value ?? "",
+          description: item?.description ?? "",
+        }))
         : [createSpecificationItem(1)],
   }));
 };
 
 const inputClass =
   "h-12 w-full rounded-xl border border-gray-300 bg-white p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+
+const textareaClass =
+  "min-h-20 w-full resize-y rounded-xl border border-gray-300 bg-white p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 md:min-h-20";
 
 export default function Specifications({
   initialSections,
@@ -61,11 +66,11 @@ export default function Specifications({
       prev.map((section) =>
         section.id === sectionId
           ? {
-              ...section,
-              items: section.items.map((item) =>
-                item.id === itemId ? { ...item, [field]: value } : item
-              ),
-            }
+            ...section,
+            items: section.items.map((item) =>
+              item.id === itemId ? { ...item, [field]: value } : item
+            ),
+          }
           : section
       )
     );
@@ -95,12 +100,12 @@ export default function Specifications({
       prev.map((section) =>
         section.id === sectionId
           ? {
-              ...section,
-              items: [
-                ...section.items,
-                createSpecificationItem(section.items.length + 1),
-              ],
-            }
+            ...section,
+            items: [
+              ...section.items,
+              createSpecificationItem(section.items.length + 1),
+            ],
+          }
           : section
       )
     );
@@ -139,6 +144,7 @@ export default function Specifications({
           id: item.id,
           title: item.title,
           value: item.value,
+          description: item.description ?? "",
         })),
       }))
     );
@@ -203,56 +209,78 @@ export default function Specifications({
                 </div>
 
                 {section.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto] md:items-center md:gap-3"
-                  >
-                    <div className="min-w-0 space-y-1">
-                      <label className="text-sm font-medium text-gray-600 md:hidden">
-                        عنوان مشخصه
-                      </label>
-                      <input
-                        className={inputClass}
-                        type="text"
-                        value={item.title}
-                        onChange={(event) =>
-                          handleItemChange(
-                            section.id,
-                            item.id,
-                            "title",
-                            event.target.value
-                          )
-                        }
-                      />
-                    </div>
-
-                    <div className="flex min-w-0 items-end gap-2">
-                      <div className="min-w-0 flex-1 space-y-1">
+                  <div key={item.id} className="space-y-2 md:space-y-3">
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto] md:items-center md:gap-3">
+                      <div className="min-w-0 space-y-1">
                         <label className="text-sm font-medium text-gray-600 md:hidden">
-                          مقدار
+                          عنوان مشخصه
                         </label>
                         <input
                           className={inputClass}
                           type="text"
-                          value={item.value}
+                          value={item.title}
                           onChange={(event) =>
                             handleItemChange(
                               section.id,
                               item.id,
-                              "value",
+                              "title",
                               event.target.value
                             )
                           }
                         />
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(section.id, item.id)}
-                        aria-label="حذف مشخصه"
-                        className="mb-0.5 shrink-0 rounded-xl p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-600 md:mb-0"
-                      >
-                        <Trash2Icon className="h-5 w-5" />
-                      </button>
+
+                      <div className="flex min-w-0 items-end gap-2">
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <label className="text-sm font-medium text-gray-600 md:hidden">
+                            مقدار
+                          </label>
+                          <input
+                            className={inputClass}
+                            type="text"
+                            value={item.value}
+                            onChange={(event) =>
+                              handleItemChange(
+                                section.id,
+                                item.id,
+                                "value",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(section.id, item.id)}
+                          aria-label="حذف مشخصه"
+                          className="mb-0.5 shrink-0 rounded-xl p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-600 md:mb-0"
+                        >
+                          <Trash2Icon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-600">
+                        توضیحات
+                        <span className="mr-1 text-xs font-normal text-gray-400">
+                          (اختیاری)
+                        </span>
+                      </label>
+                      <textarea
+                        className={textareaClass}
+                        rows={3}
+                        placeholder="توضیحات مربوط به این مشخصه را وارد کنید..."
+                        value={item.description ?? ""}
+                        onChange={(event) =>
+                          handleItemChange(
+                            section.id,
+                            item.id,
+                            "description",
+                            event.target.value
+                          )
+                        }
+                      />
                     </div>
                   </div>
                 ))}

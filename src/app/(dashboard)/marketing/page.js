@@ -179,6 +179,7 @@ const getBusinessSpecifications = (business) => {
           id: item?.id ?? itemIndex + 1,
           title: item?.title || "",
           value: item?.value ?? "",
+          description: item?.description ?? "",
         }))
       : [],
   }));
