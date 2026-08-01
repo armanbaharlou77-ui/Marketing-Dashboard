@@ -179,21 +179,24 @@ export const getBusiness = async (id) => {
 
   return response.data;
 };
-export const getFeed = async (id) => {
+export const getFeed = async (options = {}) => {
   const token = Cookies.get("owner-token");
   const activeBusiness = localStorage.getItem("dashboard-activeBusiness");
-  const businessId = id ?? (activeBusiness ? JSON.parse(activeBusiness).id : 0);
+  const defaultBusinessId = activeBusiness
+    ? JSON.parse(activeBusiness).id
+    : 0;
+
   const response = await httpClient({
     data: {
       token,
       class_name: "post",
       function_name: "get_feed",
-      page_number: 1,
-      per_page: 0, // 0 means all posts
-      search: "",
-      sort: 0, // sorts based on updated time 0 = descending order 1 = ascending
-      only_active: 0,
-      business_id: businessId, // 0 means all businesses
+      page_number: options.page_number ?? 1,
+      per_page: options.per_page ?? 0, // 0 means all posts
+      search: options.search ?? "",
+      sort: options.sort ?? 0, // sorts based on updated time 0 = descending order 1 = ascending
+      only_active: options.only_active ?? 0,
+      business_id: options.business_id ?? defaultBusinessId,
     },
   });
 

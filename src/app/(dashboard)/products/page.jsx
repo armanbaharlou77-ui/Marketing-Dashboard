@@ -1,19 +1,51 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import AddProductModal from "@/components/modals/AddProductModal";
 import { getFeed, setPost } from "@/services/authService";
 import PostCard from "@/components/cards/PostCard";
+import Pagination from "@/components/ui/Pagination";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
 import { toast } from "react-toastify";
 
+const PER_PAGE = 28;
+
 export default function Page() {
-  const [products, setProducts] = useState();
+  const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [togglingProductId, setTogglingProductId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [count, setCount] = useState(0);
+  const [isLastPage, setIsLastPage] = useState(1);
   const { activeBusiness } = useActiveBusiness();
   const activeBusinessId = activeBusiness?.id;
+
+  const fetchFeed = useCallback(async (pageNumber = 1) => {
+    if (!activeBusinessId) return;
+
+    setIsLoading(true);
+    try {
+      const feedData = await getFeed({
+        business_id: activeBusinessId,
+        page_number: pageNumber,
+        per_page: PER_PAGE,
+      });
+      setProducts(feedData.posts || []);
+      setCount(feedData.count ?? 0);
+      setIsLastPage(feedData.is_last_page ?? 1);
+      setPage(pageNumber);
+    } catch (error) {
+      console.error("Error fetching feed:", error);
+      setProducts([]);
+      setCount(0);
+      setIsLastPage(1);
+      toast.error("خطا در دریافت محصولات");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeBusinessId]);
 
   const handleEditClick = (product) => {
     setSelectedProduct(product);
@@ -25,14 +57,13 @@ export default function Page() {
     setIsModalOpen(true);
   };
 
-  const fetchFeed = async () => {
-    try {
-      const feedData = await getFeed(activeBusinessId);
-      setProducts(feedData.posts || []);
-      console.log("Fetched feed data:", feedData);
-    } catch (error) {
-      console.error("Error fetching feed:", error);
-    }
+  const handlePageChange = (nextPage) => {
+    fetchFeed(nextPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSuccess = () => {
+    fetchFeed(1);
   };
 
   const handleToggleStatus = async (product) => {
@@ -54,7 +85,7 @@ export default function Page() {
 
       if (data.msg === 0) {
         toast.success(nextStatus === 1 ? "محصول فعال شد" : "محصول غیرفعال شد");
-        await fetchFeed();
+        await fetchFeed(1);
       } else if (data.msg === 1) {
         toast.error(data.msg_txt || "خطا در تغییر وضعیت محصول");
       } else {
@@ -68,30 +99,10 @@ export default function Page() {
     }
   };
 
-
   useEffect(() => {
-    let ignore = false;
-
-    getFeed(activeBusinessId)
-      .then((feedData) => {
-        if (!ignore) {
-          setProducts(feedData.posts || []);
-          console.log("Fetched feed data:", feedData);
-        }
-      })
-      .catch((error) => {
-        if (!ignore) {
-          console.error("Error fetching feed:", error);
-        }
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, [activeBusinessId]);
-
-  console.log(activeBusiness);
-
+    if (!activeBusinessId) return;
+    fetchFeed(1);
+  }, [activeBusinessId, fetchFeed]);
 
   return (
     <>
@@ -121,7 +132,7 @@ export default function Page() {
         ) : (
           <div className="space-y-8 text-black">
             <div className="rounded-xl flex justify-between border border-gray-300 bg-slate-100 p-4 md:p-6 shadow-lg">
-              <h1 className="w-fit border-b-2 border-blue-400 md:text-2xl text-lg  font-bold">
+              <h1 className="w-fit border-b-2 border-blue-400 md:text-2xl text-lg  font-bold">
                 لیست محصولات
               </h1 >
               <button className="rounded-lg bg-blue-500 px-4 py-2 text-md font-medium text-white hover:bg-blue-600 transition-all"
@@ -142,6 +153,15 @@ export default function Page() {
               ))}
             </div>
 
+            <Pagination
+              page={page}
+              perPage={PER_PAGE}
+              count={count}
+              isLastPage={isLastPage}
+              onPageChange={handlePageChange}
+              disabled={isLoading}
+            />
+
             <AddProductModal
               isOpen={isModalOpen}
               onClose={() => {
@@ -149,7 +169,7 @@ export default function Page() {
                 setSelectedProduct(null);
               }}
               product={selectedProduct}
-              onSuccess={fetchFeed}
+              onSuccess={handleSuccess}
             />
           </div >
         )
