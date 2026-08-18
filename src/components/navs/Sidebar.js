@@ -7,7 +7,7 @@ import { GrShop } from "react-icons/gr";
 import { useRouter } from "next/navigation";
 import BusinessSelector from "@/components/ui/BusinessSelector";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
-import Cookies from "js-cookie";
+import { clearAuthSession } from "@/lib/authSession";
 import {
   LayoutDashboard,
   Package,
@@ -65,9 +65,7 @@ export default function Sidebar() {
   }, [router]);
 
   const logOut = () => {
-    Cookies.remove("owner-token", { path: "/" });
-    localStorage.clear();
-    sessionStorage.clear();
+    clearAuthSession();
     router.push("/login");
   };
 

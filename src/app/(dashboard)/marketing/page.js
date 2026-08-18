@@ -10,6 +10,7 @@ import SectionTabs from "@/components/ui/SectionTabs";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
 import { setBusiness } from "@/services/authService";
 import { toast } from "react-toastify";
+import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 
 // ۱. نگاشت فیلدهای اصلی بر اساس آبجکت سرور
 const mapBusinessToBaseInfo = (business) => ({
@@ -487,10 +488,10 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
     if (tabId === "base") {
       return Boolean(
         baseInfo.businessTitle?.trim() &&
-          baseInfo.shortDescription?.trim() &&
-          baseInfo.about?.trim() &&
-          baseInfo.address?.trim() &&
-          baseInfo.city?.trim(),
+        baseInfo.shortDescription?.trim() &&
+        baseInfo.about?.trim() &&
+        baseInfo.address?.trim() &&
+        baseInfo.city?.trim(),
       );
     }
 
@@ -857,29 +858,62 @@ function BusinessEditor({ business, userInfo, setActiveBusiness }) {
         />
       </div>
 
-      <div className="h-20" aria-hidden />
+      {/* دکمه‌های ناوبری مراحل ویرایش */}
+      <div className="sticky bottom-4 z-30 mt-8 rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-xl backdrop-blur-md transition-all">
+        <div className="flex flex-col-reverse items-center justify-end gap-3 sm:flex-row">
+          {/* نشانگر مرحله */}
+          {/* <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 sm:text-sm">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-600">
+              {activeTabIndex + 1}
+            </span>
+            <span>از {editorTabs.length}:</span>
+            <span className="font-bold text-slate-700">
+              {editorTabs[activeTabIndex]?.label}
+            </span>
+          </div> */}
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center px-4 md:left-4 xl:left-30 sm:bottom-10 sm:justify-end sm:px-6 lg:px-8">
-        <div className="pointer-events-auto flex w-full max-w-[900px] flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          {activeTabIndex > 0 ? (
+          {/* کلیدهای قبلی و بعدی / ثبت نهایی */}
+          <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
+            {activeTabIndex > 0 ? (
+              <button
+                type="button"
+                onClick={handlePrev}
+                disabled={isSaving}
+                className="group flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-100/90 px-6 py-3 text-sm font-bold text-slate-700 shadow-xs transition-all duration-200 hover:border-slate-400 hover:bg-slate-200 hover:text-slate-900 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:min-w-[130px]"
+              >
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                <span>قبلی</span>
+              </button>
+            ) : null}
+
             <button
               type="button"
-              onClick={handlePrev}
+              onClick={isLastTab ? handleSubmit : handleNext}
               disabled={isSaving}
-              className="w-full rounded-2xl bg-amber-400 px-10 py-3.5 text-sm font-bold tracking-wide text-white shadow-sm ring-1  transition duration-200 hover:bg-amber-500 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[150px]"
+              className={`group flex flex-1 items-center justify-center gap-2 rounded-xl px-7 py-3 text-sm font-bold text-white shadow-md transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:min-w-[140px] ${
+                isLastTab
+                  ? "bg-emerald-600 shadow-emerald-600/25 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/35"
+                  : "bg-indigo-600 shadow-indigo-600/25 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-600/35"
+              }`}
             >
-              قبلی
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>در حال ذخیره...</span>
+                </>
+              ) : isLastTab ? (
+                <>
+                  <Check className="h-4 w-4 stroke-[2.5]" />
+                  <span>ثبت نهایی</span>
+                </>
+              ) : (
+                <>
+                  <span>بعدی</span>
+                  <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                </>
+              )}
             </button>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={isLastTab ? handleSubmit : handleNext}
-            disabled={isSaving}
-            className="w-full rounded-2xl bg-indigo-600 px-10 py-3.5 text-sm font-bold tracking-wide text-white shadow-[0_8px_30px_rgba(79,70,229,0.28)] transition duration-200 hover:bg-indigo-700 hover:shadow-[0_10px_36px_rgba(79,70,229,0.38)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none sm:w-auto sm:min-w-[150px]"
-          >
-            {isSaving ? "در حال ذخیره..." : isLastTab ? "ثبت نهایی" : "بعدی"}
-          </button>
+          </div>
         </div>
       </div>
     </>

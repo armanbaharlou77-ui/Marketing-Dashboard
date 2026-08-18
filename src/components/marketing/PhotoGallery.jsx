@@ -132,7 +132,7 @@ export default function PhotoGallery({ galleryItems = [], onGalleryChange, banne
 
     try {
       const token = Cookies.get("owner-token");
-      const response = await addFile(file, token);
+      const response = await addFile(file, token, 700);
       const url = extractUploadUrl(response);
 
       const uploadedItems = initialItems.map((item) => {

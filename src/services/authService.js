@@ -1,5 +1,6 @@
 import axios from "axios";
 import Cookies from "js-cookie";
+import { handleTokenExpired } from "@/lib/authSession";
 
 const httpClient = axios.create({
   // baseURL: "http://192.168.100.208/saha03/demo/kasb_api",
@@ -17,6 +18,20 @@ const uploadClient = axios.create({
   baseURL: "https://manoshahrplus.ir/k_api",
   method: "POST",
 });
+
+const attachTokenExpiryInterceptor = (client) => {
+  client.interceptors.response.use((response) => {
+    if (+response?.data?.msg === 150) {
+      handleTokenExpired(response.data.msg_txt);
+      return Promise.reject(response.data);
+    }
+
+    return response;
+  });
+};
+
+attachTokenExpiryInterceptor(httpClient);
+attachTokenExpiryInterceptor(uploadClient);
 
 export const sendCode = async (phone, type) => {
   const response = await httpClient({
@@ -152,12 +167,19 @@ export const setBaseInfoApi = async (payload = {}) => {
   return response.data;
 };
 
-export const addFile = async (file, token) => {
+export const addFile = async (file, token, width = "", height = "") => {
   const formData = new FormData();
   formData.append("token", token);
   formData.append("class_name", "media");
   formData.append("function_name", "add_file");
   formData.append("file", file);
+  if (width !== "" && width != null) {
+    formData.append("width", width);
+  }
+  if (height !== "" && height != null) {
+    formData.append("height", height);
+  }
+  formData.append("format", "webp");
 
   const response = await uploadClient({
     data: formData,
@@ -182,9 +204,7 @@ export const getBusiness = async (id) => {
 export const getFeed = async (options = {}) => {
   const token = Cookies.get("owner-token");
   const activeBusiness = localStorage.getItem("dashboard-activeBusiness");
-  const defaultBusinessId = activeBusiness
-    ? JSON.parse(activeBusiness).id
-    : 0;
+  const defaultBusinessId = activeBusiness ? JSON.parse(activeBusiness).id : 0;
 
   const response = await httpClient({
     data: {

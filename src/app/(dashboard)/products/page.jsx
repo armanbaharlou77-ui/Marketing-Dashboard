@@ -7,6 +7,13 @@ import PostCard from "@/components/cards/PostCard";
 import Pagination from "@/components/ui/Pagination";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
 import { toast } from "react-toastify";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Power, Loader2 } from "lucide-react";
 
 const PER_PAGE = 28;
 
@@ -14,6 +21,7 @@ export default function Page() {
   const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [statusConfirmationProduct, setStatusConfirmationProduct] = useState(null);
   const [togglingProductId, setTogglingProductId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -66,25 +74,32 @@ export default function Page() {
     fetchFeed(1);
   };
 
-  const handleToggleStatus = async (product) => {
-    const nextStatus = Number(product.status) === 1 ? 0 : 1;
+  const handleRequestToggleStatus = (product) => {
+    setStatusConfirmationProduct(product);
+  };
 
-    setTogglingProductId(product.id);
+  const handleConfirmToggleStatus = async () => {
+    if (!statusConfirmationProduct) return;
+    const target = statusConfirmationProduct;
+    const nextStatus = Number(target.status) === 1 ? 0 : 1;
+
+    setTogglingProductId(target.id);
     try {
       const data = await setPost(
         {
-          title: product.name || "",
-          description: product.description || "",
-          image: product.image || "",
-          price: product.price || "",
-          discount: product.discount?.toString?.().replace("%", "") || product.discount || "",
+          title: target.name || "",
+          description: target.description || "",
+          image: target.image || "",
+          price: target.price || "",
+          discount: target.discount?.toString?.().replace("%", "") || target.discount || "",
           status: nextStatus,
         },
-        product.id
+        target.id
       );
 
       if (data.msg === 0) {
         toast.success(nextStatus === 1 ? "محصول فعال شد" : "محصول غیرفعال شد");
+        setStatusConfirmationProduct(null);
         await fetchFeed(1);
       } else if (data.msg === 1) {
         toast.error(data.msg_txt || "خطا در تغییر وضعیت محصول");
@@ -147,7 +162,7 @@ export default function Page() {
                   key={product.id}
                   product={product}
                   handleEditClick={handleEditClick}
-                  handleToggleStatus={handleToggleStatus}
+                  handleToggleStatus={handleRequestToggleStatus}
                   isToggling={togglingProductId === product.id}
                 />
               ))}
@@ -171,6 +186,71 @@ export default function Page() {
               product={selectedProduct}
               onSuccess={handleSuccess}
             />
+
+            {statusConfirmationProduct && (
+              <Dialog
+                open={Boolean(statusConfirmationProduct)}
+                onOpenChange={(open) => {
+                  if (!open && !togglingProductId) {
+                    setStatusConfirmationProduct(null);
+                  }
+                }}
+              >
+                <DialogContent className="rounded-3xl sm:max-w-md p-6 bg-white text-slate-800 shadow-2xl border border-slate-200">
+                  <DialogHeader className="gap-2">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${Number(statusConfirmationProduct.status) === 1
+                          ? "bg-red-50 text-red-600 ring-1 ring-red-200"
+                          : "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200"
+                          }`}
+                      >
+                        <Power className="h-5 w-5" />
+                      </span>
+                      <DialogTitle className="text-right text-lg font-bold text-slate-800">
+                        {Number(statusConfirmationProduct.status) === 1
+                          ? "آیا از غیرفعال کردن مطمئن هستید؟"
+                          : "آیا از فعال کردن مطمئن هستید؟"}
+                      </DialogTitle>
+                    </div>
+                  </DialogHeader>
+
+
+
+                  <div className="mt-4 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
+                    <button
+                      type="button"
+                      disabled={Boolean(togglingProductId)}
+                      onClick={() => setStatusConfirmationProduct(null)}
+                      className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      انصراف
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={Boolean(togglingProductId)}
+                      onClick={handleConfirmToggleStatus}
+                      className={`flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-md transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${Number(statusConfirmationProduct.status) === 1
+                        ? "bg-red-600 shadow-red-600/20 hover:bg-red-700"
+                        : "bg-emerald-600 shadow-emerald-600/20 hover:bg-emerald-700"
+                        }`}
+                    >
+                      {togglingProductId === statusConfirmationProduct.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>در حال تغییر وضعیت...</span>
+                        </>
+                      ) : Number(statusConfirmationProduct.status) === 1 ? (
+                        "بله"
+                      ) : (
+                        "بله"
+                      )}
+                    </button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div >
         )
       }

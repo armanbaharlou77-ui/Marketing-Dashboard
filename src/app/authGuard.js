@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+import { clearAuthSession } from "@/lib/authSession";
 
 const readUser = () => {
   try {
@@ -45,12 +46,6 @@ const hasBusiness = () => {
   } catch {
     return false;
   }
-};
-
-const clearAuthSession = () => {
-  Cookies.remove("owner-token", { path: "/" });
-  localStorage.clear();
-  sessionStorage.clear();
 };
 
 export default function AuthGuard({ children }) {

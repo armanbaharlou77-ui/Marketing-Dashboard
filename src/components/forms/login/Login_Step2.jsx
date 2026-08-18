@@ -6,6 +6,7 @@ import { BsArrowRight } from "react-icons/bs";
 import { toast } from "react-toastify";
 import { setInfo, start } from "@/services/authService";
 import { useActiveBusiness } from "@/components/providers/ActiveBusinessProvider";
+import { clearAuthSession } from "@/lib/authSession";
 
 import Cookies from "js-cookie";
 import {
@@ -31,9 +32,7 @@ export default function Login_Step2() {
   const inputRefs = useRef([]);
 
   const clearIncompleteLoginSession = () => {
-    Cookies.remove("owner-token", { path: "/" });
-    localStorage.clear();
-    sessionStorage.clear();
+    clearAuthSession();
   };
 
   const goToPhoneEntry = () => {
